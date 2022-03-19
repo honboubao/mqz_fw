@@ -1,8 +1,6 @@
-from pickle import FALSE
-import re
-from tokenize import PseudoToken
 from mqfw.hid import HIDReportTypes
 from mqfw.time import now, time_diff
+from mqfw.utils import find
 
 
 class HIDResults:
@@ -26,7 +24,7 @@ class KeyEvent:
         if self.keyboard:
             return
         self.keyboard = keyboard
-        self.parent = next((i for i in reversed(keyboard.resolved_key_events) if i.int_coord == self.int_coord), None)
+        self.parent = find(reversed(keyboard.resolved_key_events), lambda i: i.int_coord == self.int_coord)
         self.key = self.parent.key if self.parent else keyboard.get_keymap_key(self.int_coord)
         print("prepared", self.key)
 

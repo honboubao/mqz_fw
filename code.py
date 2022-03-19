@@ -7,6 +7,7 @@ pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
 pixels[0] = (0, 0, 1, 0.05)
 
 from mqfw.keycodes import *
+from mqfw.keys import Key, KeyboardKey
 from mqfw.keyboard import Keyboard
 from mqfw.matrix import DiodeOrientation
 
@@ -29,7 +30,8 @@ keyboard.col_pins = (
 keyboard.row_pins = (board.A0, board.A1, board.A2, board.A3)
 keyboard.diode_orientation = DiodeOrientation.COL2ROW
 
-_ = ____
+_ = XXXX
+____ = XXXX
 BASE = 0
 NUM = 1
 SYM = 2
@@ -37,20 +39,20 @@ FN = 3
 NAV = 4
 LOCK = 5
 
-UNDO = LCTL(Z)
-CUT = LCTL(X)
-COPY = LCTL(C)
-PAST = LCTL(V)
-TNAV = TT(NAV)
-DTSS = SO(DOT, ß)
-BSDL = SO(BKSP, DEL)
+UNDO = KeyboardKey(Z.keycode, LCTL.mods)
+CUT = KeyboardKey(X.keycode, LCTL.mods)
+COPY = KeyboardKey(C.keycode, LCTL.mods)
+PAST = KeyboardKey(V.keycode, LCTL.mods)
+TNAV = NOOP # TODO TT(NAV)
+DTSS = NOOP # TODO SO(DOT, ß)
+BSDL = NOOP # TODO SO(BKSP, DEL)
 
 
 def transform_modkey(key, mod):
-    if key.key in (LSFT, LCTL, LWIN, LALT):
+    if key in (LSFT, LCTL, LWIN, LALT):
         return key
 
-    if isinstance(mod, mod.mods > 0):
+    if isinstance(mod, Key) and mod.mods > 0:
         return MT(mod, key)
     if isinstance(mod, int):
         return LT(mod, key)
@@ -106,6 +108,8 @@ keyboard.keymap = [apply_modtaps(keymap) for keymap in [
 
 
 pixels[0] = (0, 1, 0, 0.05)
+
+print("Started")
 
 if __name__ == '__main__':
     keyboard.go()
