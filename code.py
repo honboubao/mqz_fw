@@ -44,6 +44,10 @@ CUT = KeyboardKey(X.keycode, KC_LCTL)
 COPY = KeyboardKey(C.keycode, KC_LCTL)
 PAST = KeyboardKey(V.keycode, KC_LCTL)
 MNAV = MO(NAV)
+LNUM = TO(NUM)
+LSYM = TO(SYM)
+LFN = TO(FN)
+LNAV = TO(NAV)
 DTSS = SO(DOT, ß)
 BSDL = SO(BKSP, DEL, ignore_caps=True)
 ATAB = NOOP # TODO
@@ -56,7 +60,7 @@ def transform_modkey(key, mod, layer):
 
     if isinstance(mod, Key) and mod.mods > 0:
         return MT(mod, key)
-    if isinstance(mod, int) and layer == 0:
+    if isinstance(mod, int) and (mod == LOCK or layer == 0):
         return LT(mod, key)
     return key
 
@@ -64,9 +68,9 @@ def apply_modtaps(keymap, layer):
     return [transform_modkey(key, mod, layer) for key, mod in zip(keymap, modtaps)]
 
 modtaps = [ # mod taps
-        ____, ____, FN,   ____, ____, ____, ____, FN,   ____, ____,
+        ____, ____, FN,   ____, ____, ____, ____, ____, ____, ____,
         LSFT, SYM,  NUM,  ____, ____, LOCK, ____, NUM,  SYM,  RSFT,
-        LCTL, LWIN, LALT, ____, ____, ____, ____, RALT, RWIN, RCTL,
+        LCTL, LWIN, LALT, ____, ____, FN,   ____, RALT, RWIN, RCTL,
         _,    _,    _,    _,    ____, ____, _,    _,    _,    _
     ]
 keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
@@ -101,10 +105,10 @@ keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
         _,    _,    _,    _,    MNAV, TAB,  _,    _,    _,    _
     ],
     [ # lock
+        ____, ____, LFN,  ____, ____, ____, ____, ____, ____, ____,
+        CAPS, LSYM, LNUM, ____, ____, ____, ____, LNUM, LSYM, CAPS,
         ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-        CAPS, ____, ____, ____, ____, ____, ____, ____, ____, CAPS,
-        ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-        _,    _,    _,    _,    ____, ____, _,    _,    _,    _
+        _,    _,    _,    _,    LNAV, CLLK, _,    _,    _,    _
     ]
 ])]
 
@@ -120,7 +124,7 @@ if __name__ == '__main__':
 # TODO
 # (ZMKK hold tap flavors)
 # Mouse buttons 4/5
-# lock/clear lock
+# clear lock clears cap
 
 # alt tab
 # ctrl tab

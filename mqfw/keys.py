@@ -243,6 +243,30 @@ class MomentaryLayerKey(Key):
         return True
 
 
+class SetLayerKey(Key):
+    def __init__(self, layer):
+        super().__init__(None, None, 0, 0)
+        self.layer = layer
+
+    def resolve(self, key_event, keyboard):
+        if key_event.pressed:
+            keyboard.activate_layer(self.layer)
+        else:
+            key_event.remove_all()
+        return True
+
+
+class ClearLockKey(Key):
+    def __init__(self):
+        super().__init__(None, None, 0, 0)
+
+    def resolve(self, key_event, keyboard):
+        if key_event.pressed:
+            keyboard.set_layer(0)
+        else:
+            key_event.remove_all()
+        return True
+
 class ShiftOverrideKey(Key):
     def __init__(self, base_key, shifted_key, ignore_caps=False):
         super().__init__(None, None, 0, 0)

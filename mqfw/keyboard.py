@@ -80,11 +80,16 @@ class Keyboard:
 
         return layer_key
 
+    def set_layer(self, layer):
+        self._active_layers.clear()
+        self._active_layers.append(layer)
+
     def activate_layer(self, layer):
         self._active_layers.insert(0, layer)
 
     def deactivate_layer(self, layer):
-        self._active_layers.remove(layer)
+        if layer in self._active_layers:
+            self._active_layers.remove(layer)
 
     def is_shift_pressed(self):
         for kevent in self.resolved_key_events:
