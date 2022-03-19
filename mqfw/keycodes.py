@@ -1,8 +1,9 @@
-from mqfw.keys import Key, KeyboardKey, LayerTapKey, ModTapKey, MouseKey
+from mqfw.keys import KC_LALT, KC_LCTL, KC_LSFT, KC_LWIN, KC_RALT, KC_RCTL, KC_RSFT, KC_RWIN, Key, KeyboardKey, LayerTapKey, ModTapKey, MouseKey, ShiftOverrideKey
 
 XXXX = ____ = NOOP = Key(None, None, 0, 0)
 MT = ModTapKey
 LT = LayerTapKey
+SO = ShiftOverrideKey
 
 
 # ┌───┐   ┌───┬───┬───┬───┐ ┌───┬───┬───┬───┐ ┌───┬───┬───┬───┐
@@ -19,14 +20,14 @@ LT = LayerTapKey
 # ├────┼───┴┬──┴─┬─┴───┴───┴───┴───┴───┴──┬┴───┼───┴┬────┬────┤
 # │LCTL│LWIN│LALT│           SPC          │RALT│RWIN│APP │RCTL│
 # └────┴────┴────┴────────────────────────┴────┴────┴────┴────┘
-LCTL = KeyboardKey(None, 0x01)
-LSFT = KeyboardKey(None, 0x02)
-LALT = KeyboardKey(None, 0x04)
-LWIN = KeyboardKey(None, 0x08)
-RCTL = KeyboardKey(None, 0x10)
-RSFT = KeyboardKey(None, 0x20)
-RALT = KeyboardKey(None, 0x40)
-RWIN = KeyboardKey(None, 0x80)
+LCTL = KeyboardKey(None, KC_LCTL)
+LSFT = KeyboardKey(None, KC_LSFT)
+LALT = KeyboardKey(None, KC_LALT)
+LWIN = KeyboardKey(None, KC_LWIN)
+RCTL = KeyboardKey(None, KC_RCTL)
+RSFT = KeyboardKey(None, KC_RSFT)
+RALT = KeyboardKey(None, KC_RALT)
+RWIN = KeyboardKey(None, KC_RWIN)
 
 ENT = KeyboardKey(40)
 ESC = KeyboardKey(41)
@@ -177,28 +178,28 @@ MINS = KeyboardKey(56)         # -
 # │    │    │    │                        │    │    │    │    │
 # └────┴────┴────┴────────────────────────┴────┴────┴────┴────┘
 # Row 1
-DEG = KeyboardKey(CIRC.keycode, LSFT.mods)         # °
-EXLM = KeyboardKey(N1.keycode, LSFT.mods)          # !
-DQUO = KeyboardKey(N2.keycode, LSFT.mods)          # "
-SECT = KeyboardKey(N3.keycode, LSFT.mods)          # §
-DLR = KeyboardKey(N4.keycode, LSFT.mods)           # $
-PERC = KeyboardKey(N5.keycode, LSFT.mods)          # %
-AMPR = KeyboardKey(N6.keycode, LSFT.mods)          # &
-SLSH = KeyboardKey(N7.keycode, LSFT.mods)          # /
-LPRN = KeyboardKey(N8.keycode, LSFT.mods)          # (
-RPRN = KeyboardKey(N9.keycode, LSFT.mods)          # )
-EQL = KeyboardKey(N0.keycode, LSFT.mods)           # =
-QUES = KeyboardKey(ß.keycode, LSFT.mods)           # ?
-GRV = KeyboardKey(ACUT.keycode, LSFT.mods)         # ` (dead)
+DEG = KeyboardKey(CIRC.keycode, KC_LSFT)         # °
+EXLM = KeyboardKey(N1.keycode, KC_LSFT)          # !
+DQUO = KeyboardKey(N2.keycode, KC_LSFT)          # "
+SECT = KeyboardKey(N3.keycode, KC_LSFT)          # §
+DLR = KeyboardKey(N4.keycode, KC_LSFT)           # $
+PERC = KeyboardKey(N5.keycode, KC_LSFT)          # %
+AMPR = KeyboardKey(N6.keycode, KC_LSFT)          # &
+SLSH = KeyboardKey(N7.keycode, KC_LSFT)          # /
+LPRN = KeyboardKey(N8.keycode, KC_LSFT)          # (
+RPRN = KeyboardKey(N9.keycode, KC_LSFT)          # )
+EQL = KeyboardKey(N0.keycode, KC_LSFT)           # =
+QUES = KeyboardKey(ß.keycode, KC_LSFT)           # ?
+GRV = KeyboardKey(ACUT.keycode, KC_LSFT)         # ` (dead)
 # Row 2
-ASTR = KeyboardKey(PLUS.keycode, LSFT.mods)        # *
+ASTR = KeyboardKey(PLUS.keycode, KC_LSFT)        # *
 # Row 3
-QUOT = KeyboardKey(HASH.keycode, LSFT.mods)        # '
+QUOT = KeyboardKey(HASH.keycode, KC_LSFT)        # '
 # Row 4
-RABK = KeyboardKey(LABK.keycode, LSFT.mods)        # >
-SCLN = KeyboardKey(COMM.keycode, LSFT.mods)        # ;
-COLN = KeyboardKey(DOT.keycode, LSFT.mods)         # :
-UNDS = KeyboardKey(MINS.keycode, LSFT.mods)        # _
+RABK = KeyboardKey(LABK.keycode, KC_LSFT)        # >
+SCLN = KeyboardKey(COMM.keycode, KC_LSFT)        # ;
+COLN = KeyboardKey(DOT.keycode, KC_LSFT)         # :
+UNDS = KeyboardKey(MINS.keycode, KC_LSFT)        # _
 
 # AltGr symbols
 # ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───────┐
@@ -213,20 +214,20 @@ UNDS = KeyboardKey(MINS.keycode, LSFT.mods)        # _
 # │    │    │    │                        │    │    │    │    │
 # └────┴────┴────┴────────────────────────┴────┴────┴────┴────┘
 # Row 1
-SUP2 = KeyboardKey(N2.keycode, RALT.mods)     # ²
-SUP3 = KeyboardKey(N3.keycode, RALT.mods)     # ³
-LCBR = KeyboardKey(N7.keycode, RALT.mods)     # {
-LBRC = KeyboardKey(N8.keycode, RALT.mods)     # [
-RBRC = KeyboardKey(N9.keycode, RALT.mods)     # ]
-RCBR = KeyboardKey(N0.keycode, RALT.mods)     # }
-BSLS = KeyboardKey(ß.keycode, RALT.mods)      # \
+SUP2 = KeyboardKey(N2.keycode, KC_RALT)     # ²
+SUP3 = KeyboardKey(N3.keycode, KC_RALT)     # ³
+LCBR = KeyboardKey(N7.keycode, KC_RALT)     # {
+LBRC = KeyboardKey(N8.keycode, KC_RALT)     # [
+RBRC = KeyboardKey(N9.keycode, KC_RALT)     # ]
+RCBR = KeyboardKey(N0.keycode, KC_RALT)     # }
+BSLS = KeyboardKey(ß.keycode, KC_RALT)      # \
 # Row 2
-AT = KeyboardKey(Q.keycode, RALT.mods)        # @
-EURO = KeyboardKey(E.keycode, RALT.mods)      # €
-TILD = KeyboardKey(RBRC.keycode, RALT.mods)   # ~
+AT = KeyboardKey(Q.keycode, KC_RALT)        # @
+EURO = KeyboardKey(E.keycode, KC_RALT)      # €
+TILD = KeyboardKey(RBRC.keycode, KC_RALT)   # ~
 # Row 4
-PIPE = KeyboardKey(LABK.keycode, RALT.mods)   # |
-MICR = KeyboardKey(M.keycode, RALT.mods)      # µ
+PIPE = KeyboardKey(LABK.keycode, KC_RALT)   # |
+MICR = KeyboardKey(M.keycode, KC_RALT)      # µ
 
 
 # Media Keys

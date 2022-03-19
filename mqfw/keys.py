@@ -3,6 +3,22 @@ from mqfw.time import now, time_diff
 from mqfw.utils import find
 
 
+# KC_NUMLOCK = 0x01
+KC_CAPSLOCK = 0x02
+# KC_SCROLLLOCK = 0x04
+# KC_COMPOSE = 0x08
+# KC_KANA = 0x10
+# KC_RESERVED = 0x20
+
+KC_LCTL = 0x01
+KC_LSFT = 0x02
+KC_LALT = 0x04
+KC_LWIN = 0x08
+KC_RCTL = 0x10
+KC_RSFT = 0x20
+KC_RALT = 0x40
+KC_RWIN = 0x80
+
 class HIDResults:
     def __init__(self, hid_type, keycode, mods, disable_mods):
         self.hid_usage = hid_type
@@ -212,3 +228,54 @@ class LayerTapKey(HoldTapKey):
             key_event.remove_all()
             return True
 
+
+class ShiftOverrideKey(Key):
+    def __init__(self, base_key, shifted_key, ignore_caps=False):
+        super().__init__(None, None, 0, 0)
+        self.base_key = base_key
+        self.shifted_key = shifted_key
+        self.resolved_key = None
+        self.ignore_caps = ignore_caps
+
+    def resolve(self, key_event, keyboard):
+        if self.ignore_caps:
+            is_shifted = keyboard.is_shift_pressed()
+        else:
+            is_shifted = keyboard.is_shifted()
+
+        if key_event.pressed:
+            if is_shifted:
+                return self._resolve_shifted(key_event, keyboard)
+            else:
+                return self._resolve_base(key_event, keyboard)
+        else:
+            return self._resolve_release(key_event, keyboard)
+
+    def _resolve_base(self, key_event, keyboard):
+        self.resolved_key = self.base_key
+        result = self.resolved_key.resolve(key_event, keyboard)
+        self._handle_caps(result, keyboard)
+        return result
+
+    def _resolve_shifted(self, key_event, keyboard):
+        self.resolved_key = self.shifted_key
+        result = self.resolved_key.resolve(key_event, keyboard)
+        self._handle_caps(result, keyboard)
+        return result
+
+    def _handle_caps(self, resolve_result, keyboard):
+        if isinstance(resolve_result, HIDResults):
+            is_shifted_key = (resolve_result.mods & (KC_LSFT | KC_RSFT)) > 0
+            is_caps_locked = keyboard.is_caps_locked()
+            print(is_shifted_key, is_caps_locked)
+            if (is_shifted_key == is_caps_locked) or (not is_shifted_key and self.ignore_caps):
+                resolve_result.disable_mods |= KC_LSFT | KC_RSFT
+            elif not is_shifted_key and is_caps_locked:
+                resolve_result.mods |= KC_LSFT
+
+    def _resolve_release(self, key_event, keyboard):
+        if self.resolved_key:
+            return self.resolved_key.resolve(key_event, keyboard)
+        else:
+            key_event.remove_all()
+            return True

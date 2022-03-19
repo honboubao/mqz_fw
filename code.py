@@ -39,13 +39,15 @@ FN = 3
 NAV = 4
 LOCK = 5
 
-UNDO = KeyboardKey(Z.keycode, LCTL.mods)
-CUT = KeyboardKey(X.keycode, LCTL.mods)
-COPY = KeyboardKey(C.keycode, LCTL.mods)
-PAST = KeyboardKey(V.keycode, LCTL.mods)
+UNDO = KeyboardKey(Z.keycode, KC_LCTL)
+CUT = KeyboardKey(X.keycode, KC_LCTL)
+COPY = KeyboardKey(C.keycode, KC_LCTL)
+PAST = KeyboardKey(V.keycode, KC_LCTL)
 TNAV = NOOP # TODO TT(NAV)
-DTSS = NOOP # TODO SO(DOT, ß)
-BSDL = NOOP # TODO SO(BKSP, DEL)
+DTSS = SO(DOT, ß)
+BSDL = SO(BKSP, DEL, ignore_shift=True)
+ATAB = NOOP # TODO
+ACTL = NOOP # TODO
 
 
 def transform_modkey(key, mod):
@@ -93,8 +95,8 @@ keyboard.keymap = [apply_modtaps(keymap) for keymap in [
         _,    _,    _,    _,    TNAV, SPC,  _,    _,    _,    _   
     ],
     [ # nav
-        ____, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
-        ____, LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
+        ATAB, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
+        ACTL, LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
         UNDO, ESC,  BKSP, DEL,  MBBK, MBFW, CUT,  COPY, PAST, ESC,
         _,    _,    _,    _,    TNAV, TAB,  _,    _,    _,    _   
     ],

@@ -65,6 +65,8 @@ class AbstractHID:
         self.report_mods = memoryview(self._evt)[1:2]
         self.report_non_mods = memoryview(self._evt)[3:]
 
+        self.devices = {}
+
         self.post_init()
 
     def __repr__(self):
@@ -147,6 +149,10 @@ class AbstractHID:
             if where_to_place[idx] == keycode:
                 where_to_place[idx] = 0x00
 
+    def get_host_report(self):
+        if HIDReportTypes.KEYBOARD in self.devices:
+            return self.devices[HIDReportTypes.KEYBOARD].get_last_received_report()
+        return None
 
 class USBHID(AbstractHID):
     REPORT_BYTES = 9
