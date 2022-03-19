@@ -45,23 +45,23 @@ COPY = KeyboardKey(C.keycode, KC_LCTL)
 PAST = KeyboardKey(V.keycode, KC_LCTL)
 MNAV = MO(NAV)
 DTSS = SO(DOT, ß)
-BSDL = SO(BKSP, DEL, ignore_shift=True)
+BSDL = SO(BKSP, DEL, ignore_caps=True)
 ATAB = NOOP # TODO
 ACTL = NOOP # TODO
 
 
-def transform_modkey(key, mod):
+def transform_modkey(key, mod, layer):
     if key in (LSFT, LCTL, LWIN, LALT):
         return key
 
     if isinstance(mod, Key) and mod.mods > 0:
         return MT(mod, key)
-    if isinstance(mod, int):
+    if isinstance(mod, int) and layer == 0:
         return LT(mod, key)
     return key
 
-def apply_modtaps(keymap):
-    return [transform_modkey(key, mod) for key, mod in zip(keymap, modtaps)]
+def apply_modtaps(keymap, layer):
+    return [transform_modkey(key, mod, layer) for key, mod in zip(keymap, modtaps)]
 
 modtaps = [ # mod taps
         ____, ____, FN,   ____, ____, ____, ____, FN,   ____, ____,
@@ -69,7 +69,7 @@ modtaps = [ # mod taps
         LCTL, LWIN, LALT, ____, ____, ____, ____, RALT, RWIN, RCTL,
         _,    _,    _,    _,    ____, ____, _,    _,    _,    _
     ]
-keyboard.keymap = [apply_modtaps(keymap) for keymap in [
+keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
     [ # base
         Q,    W,    E,    R,    T,    Z,    U,    I,    O,    P,
         A,    S,    D,    F,    G,    H,    J,    K,    L,    Ö,
@@ -106,7 +106,7 @@ keyboard.keymap = [apply_modtaps(keymap) for keymap in [
         ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
         _,    _,    _,    _,    ____, ____, _,    _,    _,    _
     ]
-]]
+])]
 
 
 pixels[0] = (0, 1, 0, 0.05)
@@ -123,13 +123,11 @@ if __name__ == '__main__':
 # lock/clear lock
 
 # alt tab
-#     shift backspace delete
+# ctrl tab
 
 # deactivate caps on layer change
 
 # hide circuitpy drive
-
-# repeat arrow keys
 
 # bluetooth multiple connections
 # ble status light
