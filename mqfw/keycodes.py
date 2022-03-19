@@ -1,8 +1,9 @@
-from mqfw.keys import KC_LALT, KC_LCTL, KC_LSFT, KC_LWIN, KC_RALT, KC_RCTL, KC_RSFT, KC_RWIN, Key, KeyboardKey, LayerTapKey, ModTapKey, MouseKey, ShiftOverrideKey
+from mqfw.keys import KC_LALT, KC_LCTL, KC_LSFT, KC_LWIN, KC_RALT, KC_RCTL, KC_RSFT, KC_RWIN, Key, KeyboardKey, LayerTapKey, ModTapKey, MomentaryLayerKey, MouseKey, ShiftOverrideKey
 
 XXXX = ____ = NOOP = Key(None, None, 0, 0)
 MT = ModTapKey
 LT = LayerTapKey
+MO = MomentaryLayerKey
 SO = ShiftOverrideKey
 
 

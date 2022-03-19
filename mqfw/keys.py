@@ -229,6 +229,20 @@ class LayerTapKey(HoldTapKey):
             return True
 
 
+class MomentaryLayerKey(Key):
+    def __init__(self, layer):
+        super().__init__(None, None, 0, 0)
+        self.layer = layer
+
+    def resolve(self, key_event, keyboard):
+        if key_event.pressed:
+            keyboard.activate_layer(self.layer)
+        else:
+            keyboard.deactivate_layer(self.layer)
+            key_event.remove_all()
+        return True
+
+
 class ShiftOverrideKey(Key):
     def __init__(self, base_key, shifted_key, ignore_caps=False):
         super().__init__(None, None, 0, 0)

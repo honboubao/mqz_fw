@@ -43,7 +43,7 @@ UNDO = KeyboardKey(Z.keycode, KC_LCTL)
 CUT = KeyboardKey(X.keycode, KC_LCTL)
 COPY = KeyboardKey(C.keycode, KC_LCTL)
 PAST = KeyboardKey(V.keycode, KC_LCTL)
-TNAV = NOOP # TODO TT(NAV)
+MNAV = MO(NAV)
 DTSS = SO(DOT, ß)
 BSDL = SO(BKSP, DEL, ignore_shift=True)
 ATAB = NOOP # TODO
@@ -67,44 +67,44 @@ modtaps = [ # mod taps
         ____, ____, FN,   ____, ____, ____, ____, FN,   ____, ____,
         LSFT, SYM,  NUM,  ____, ____, LOCK, ____, NUM,  SYM,  RSFT,
         LCTL, LWIN, LALT, ____, ____, ____, ____, RALT, RWIN, RCTL,
-        _,    _,    _,    _,    ____, ____, _,    _,    _,    _   
+        _,    _,    _,    _,    ____, ____, _,    _,    _,    _
     ]
 keyboard.keymap = [apply_modtaps(keymap) for keymap in [
     [ # base
         Q,    W,    E,    R,    T,    Z,    U,    I,    O,    P,
         A,    S,    D,    F,    G,    H,    J,    K,    L,    Ö,
         Y,    X,    C,    V,    B,    N,    M,    Ü,    DTSS, Ä,
-        _,    _,    _,    _,    TNAV, SPC,  _,    _,    _,    _   
+        _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
     ],
     [ # num
         DEG,  SECT, SUP2, SUP3, ____, COLN, N7,   N8,   N9,   BKSP,
         EURO, ACUT, MICR, SPC,  ____, COMM, N4,   N5,   N6,   ENT,
         ____, BSLS, ____, ____, ____, DOT,  N1,   N2,   N3,   MINS,
-        _,    _,    _,    _,    TNAV, N0,   _,    _,    _,    _   
+        _,    _,    _,    _,    MNAV, N0,   _,    _,    _,    _
     ],
     [ # sym
         CIRC, DLR,  HASH, PERC, AMPR, PIPE, LCBR, RCBR, LBRC, RBRC,
         AT,   GRV,  QUOT, DQUO, QUES, EXLM, LPRN, RPRN, LABK, RABK,
         TILD, SLSH, ASTR, PLUS, MINS, EQL,  SCLN, COMM, COLN, UNDS,
-        _,    _,    _,    _,    TNAV, SPC,  _,    _,    _,    _   
+        _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
     ],
     [ # fn
         ____, ____, ____, ____, INS,  SLCK, F7,   F8,   F9,   F10,
         LSFT, ____, ____, ____, PSCR, PAUS, F4,   F5,   F6,   F11,
         LCTL, LWIN, LALT, ____, APP,  ____, F1,   F2,   F3,   F12,
-        _,    _,    _,    _,    TNAV, SPC,  _,    _,    _,    _   
+        _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
     ],
     [ # nav
         ATAB, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
         ACTL, LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
         UNDO, ESC,  BKSP, DEL,  MBBK, MBFW, CUT,  COPY, PAST, ESC,
-        _,    _,    _,    _,    TNAV, TAB,  _,    _,    _,    _   
+        _,    _,    _,    _,    MNAV, TAB,  _,    _,    _,    _
     ],
     [ # lock
         ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
         CAPS, ____, ____, ____, ____, ____, ____, ____, ____, CAPS,
         ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-        _,    _,    _,    _,    ____, ____,  _,    _,    _,    _   
+        _,    _,    _,    _,    ____, ____, _,    _,    _,    _
     ]
 ]]
 
@@ -120,7 +120,6 @@ if __name__ == '__main__':
 # TODO
 # (ZMKK hold tap flavors)
 # Mouse buttons 4/5
-# shift dot eszett
 # lock/clear lock
 
 # alt tab
