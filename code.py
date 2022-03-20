@@ -137,17 +137,10 @@ if __name__ == '__main__':
 # TODO
 # (ZMKK hold tap flavors)
 # Mouse buttons 4/5
-# clear lock clears cap
-
 # deactivate caps on layer change
-
 # hide circuitpy drive
-
 # bluetooth multiple connections
 # ble status light
-
 # double tap repeat
-
 # ble powersaving
-
 # ble and usb

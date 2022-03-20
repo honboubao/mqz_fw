@@ -287,9 +287,11 @@ class ClearLockKey(Key):
     def resolve(self, key_event, keyboard):
         if key_event.pressed:
             keyboard.set_layer(0)
+            keyboard.unlock_caps()
         else:
             key_event.remove_all()
         return True
+
 
 class ShiftOverrideKey(Key):
     def __init__(self, base_key, shifted_key, ignore_caps=False):

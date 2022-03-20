@@ -2,6 +2,7 @@ from mqfw.hid import BLEHID, USBHID
 from mqfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
 from mqfw.matrix import MatrixScanner
 from mqfw.utils import find
+import mqfw.keycodes as KC
 
 class Keyboard:
     debug_enabled = False
@@ -54,6 +55,7 @@ class Keyboard:
 
         matrix_update = self._matrix.scan_for_changes()
         if matrix_update:
+            self._log('\n################################################')
             self._log('MatrixChange(ic={} pressed={})'.format(matrix_update.int_coord, matrix_update.pressed))
             self.unresolved_key_events.append(matrix_update)
 
@@ -65,6 +67,7 @@ class Keyboard:
                     self.before_resolved(e)
                 self.resolved_key_events.append(e)
                 self.unresolved_key_events.remove(e)
+                self._log('ResolvedKeyEvents({})'.format(self.resolved_key_events))
             self.resolved_key_events = [e for e in self.resolved_key_events if not e.to_be_removed]
 
         self._send_hid()
@@ -126,3 +129,15 @@ class Keyboard:
         key_event = KeyEvent.virtual(self, key, False)
         self.resolved_key_events.append(key_event)
         self._send_hid()
+
+    def tap_key(self, key):
+        self.press_key(key)
+        self.release_key(key)
+
+    def unlock_caps(self):
+        if self.is_caps_locked():
+            self.tap_key(KC.CAPS)
+
+    def lock_caps(self):
+        if not self.is_caps_locked():
+            self.tap_key(KC.CAPS)
