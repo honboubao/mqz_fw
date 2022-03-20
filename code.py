@@ -50,8 +50,9 @@ LFN = TO(FN)
 LNAV = TO(NAV)
 DTSS = SO(DOT, ß)
 BSDL = SO(BKSP, DEL, ignore_caps=True)
-ATAB = NOOP # TODO
-ACTL = NOOP # TODO
+ATAB = KeyboardKey(TAB.keycode)
+CTAB = KeyboardKey(TAB.keycode)
+ACTMOD = KeyboardKey(None)
 
 
 def transform_modkey(key, mod, layer):
@@ -99,9 +100,9 @@ keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
         _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
     ],
     [ # nav
-        ATAB, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
-        ACTL, LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
-        UNDO, ESC,  BKSP, DEL,  MBBK, MBFW, CUT,  COPY, PAST, ESC,
+        UNDO, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
+        ESC,  LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
+        MBBK, MBFW, BKSP, DEL,  ATAB, CTAB, CUT,  COPY, PAST, ESC,
         _,    _,    _,    _,    MNAV, TAB,  _,    _,    _,    _
     ],
     [ # lock
@@ -111,6 +112,18 @@ keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
         _,    _,    _,    _,    LNAV, CLLK, _,    _,    _,    _
     ]
 ])]
+
+def before_resolved(key_event):
+    if key_event.pressed and (key_event.key == ATAB or key_event.key == CTAB):
+        if not keyboard.is_key_pressed(ACTMOD) and keyboard.is_key_pressed(MNAV):
+            ACTMOD.mods = KC_LALT if key_event.key == ATAB else KC_LCTL
+            keyboard.press_key(ACTMOD)
+
+    if not key_event.pressed and key_event.key == MNAV:
+        if keyboard.is_key_pressed(ACTMOD):
+            keyboard.release_key(ACTMOD)
+
+keyboard.before_resolved = before_resolved
 
 
 pixels[0] = (0, 1, 0, 0.05)
@@ -125,9 +138,6 @@ if __name__ == '__main__':
 # (ZMKK hold tap flavors)
 # Mouse buttons 4/5
 # clear lock clears cap
-
-# alt tab
-# ctrl tab
 
 # deactivate caps on layer change
 

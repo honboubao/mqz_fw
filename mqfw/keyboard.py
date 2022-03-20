@@ -1,6 +1,7 @@
 from mqfw.hid import BLEHID, USBHID
-from mqfw.keys import KC_CAPSLOCK, KC_LSFT, KC_RSFT
+from mqfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
 from mqfw.matrix import MatrixScanner
+from mqfw.utils import find
 
 class Keyboard:
     debug_enabled = False
@@ -14,6 +15,8 @@ class Keyboard:
     hid_device = USBHID
     ble_name='CircuitPython Keyboard BLE'
     tapping_term = 300
+
+    before_resolved = None
 
     # state
     unresolved_key_events = []
@@ -58,6 +61,8 @@ class Keyboard:
             e = self.unresolved_key_events[0]
             e.prepare(self)
             if e.resolve():
+                if self.before_resolved:
+                    self.before_resolved(e)
                 self.resolved_key_events.append(e)
                 self.unresolved_key_events.remove(e)
             self.resolved_key_events = [e for e in self.resolved_key_events if not e.to_be_removed]
@@ -91,14 +96,14 @@ class Keyboard:
         if layer in self._active_layers:
             self._active_layers.remove(layer)
 
+    def is_mod_pressed(self, mods):
+        return bool(find(self.resolved_key_events, lambda e:
+            e.hid_results is not None and
+            e.hid_results.keycode is None and
+            e.hid_results.mods & (KC_LSFT | KC_RSFT) > 0))
+
     def is_shift_pressed(self):
-        for kevent in self.resolved_key_events:
-            if kevent.hid_results is None or kevent.hid_results.keycode is not None:
-                continue
-            
-            if kevent.hid_results.mods & (KC_LSFT | KC_RSFT):
-                return True
-        return False
+        return self.is_mod_pressed(KC_LSFT | KC_RSFT)
 
     def is_caps_locked(self):
         return (self._hid_host_report_mods & KC_CAPSLOCK) > 0
@@ -108,3 +113,16 @@ class Keyboard:
         if self.is_caps_locked():
             return not s
         return s
+
+    def is_key_pressed(self, key):
+        return bool(find(self.resolved_key_events, lambda i: i.key == key))
+
+    def press_key(self, key):
+        key_event = KeyEvent.virtual(self, key, True)
+        self.resolved_key_events.append(key_event)
+        self._send_hid()
+
+    def release_key(self, key):
+        key_event = KeyEvent.virtual(self, key, False)
+        self.resolved_key_events.append(key_event)
+        self._send_hid()
