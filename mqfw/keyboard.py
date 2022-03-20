@@ -18,6 +18,7 @@ class Keyboard:
     tapping_term = 300
 
     before_resolved = None
+    on_layer_changed = None
 
     # state
     unresolved_key_events = []
@@ -88,16 +89,26 @@ class Keyboard:
 
         return layer_key
 
+    def _check_layer_changed(self, prev_layer):
+        if self.on_layer_changed and self._active_layers[0] != prev_layer:
+            self.on_layer_changed(self._active_layers[0], prev_layer)
+
     def set_layer(self, layer):
+        prev_layer = self._active_layers[0]
         self._active_layers.clear()
         self._active_layers.append(layer)
+        self._check_layer_changed(prev_layer)
 
     def activate_layer(self, layer):
+        prev_layer = self._active_layers[0]
         self._active_layers.insert(0, layer)
+        self._check_layer_changed(prev_layer)
 
     def deactivate_layer(self, layer):
+        prev_layer = self._active_layers[0]
         if layer in self._active_layers:
             self._active_layers.remove(layer)
+        self._check_layer_changed(prev_layer)
 
     def is_mod_pressed(self, mods):
         return bool(find(self.resolved_key_events, lambda e:

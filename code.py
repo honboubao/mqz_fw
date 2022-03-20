@@ -126,6 +126,22 @@ def before_resolved(key_event):
 keyboard.before_resolved = before_resolved
 
 
+was_caps_locked = False
+
+def on_layer_changed(layer, prev_layer):
+    global was_caps_locked
+    if layer not in (BASE, LOCK):
+        if keyboard.is_caps_locked():
+            was_caps_locked = True
+            keyboard.unlock_caps()
+    else:
+        if was_caps_locked:
+            was_caps_locked = False
+            keyboard.lock_caps()
+
+keyboard.on_layer_changed = on_layer_changed
+
+
 pixels[0] = (0, 1, 0, 0.05)
 
 print("Started")
@@ -137,7 +153,6 @@ if __name__ == '__main__':
 # TODO
 # (ZMKK hold tap flavors)
 # Mouse buttons 4/5
-# deactivate caps on layer change
 # hide circuitpy drive
 # bluetooth multiple connections
 # ble status light

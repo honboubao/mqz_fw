@@ -1,5 +1,5 @@
 def find(list, condition, default=None):
     try:
-        return next(i for i in list if condition(i))
+        return next(filter(condition, list))
     except StopIteration:
         return default
