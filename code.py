@@ -2,6 +2,7 @@ print("Starting")
 
 import board
 import adafruit_dotstar
+from mqfw.hid import BLEHID
 
 pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
 pixels[0] = (0, 0, 1, 0.05)
@@ -12,7 +13,7 @@ from mqfw.keyboard import Keyboard
 from mqfw.matrix import DiodeOrientation
 
 keyboard = Keyboard()
-keyboard.ble_name = 'Micro Qwertz BLE'
+keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE')
 keyboard.debug_enabled = True
 
 keyboard.col_pins = (
@@ -159,3 +160,5 @@ if __name__ == '__main__':
 # double tap repeat
 # ble powersaving
 # ble and usb
+# ble encryption
+# multiple ble connections

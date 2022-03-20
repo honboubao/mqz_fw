@@ -65,8 +65,6 @@ class AbstractHID:
         self.report_mods = memoryview(self._evt)[1:2]
         self.report_non_mods = memoryview(self._evt)[3:]
 
-        self.devices = {}
-
         self.post_init()
 
     def __repr__(self):
@@ -150,8 +148,6 @@ class AbstractHID:
                 where_to_place[idx] = 0x00
 
     def get_host_report(self):
-        if HIDReportTypes.KEYBOARD in self.devices:
-            return self.devices[HIDReportTypes.KEYBOARD].get_last_received_report()
         return None
 
 class USBHID(AbstractHID):
@@ -166,19 +162,12 @@ class USBHID(AbstractHID):
 
             if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
                 self.devices[HIDReportTypes.CONSUMER] = device
-                continue
-
-            if up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
+            elif up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
                 self.devices[HIDReportTypes.KEYBOARD] = device
-                continue
-
-            if up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
+            elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                 self.devices[HIDReportTypes.MOUSE] = device
-                continue
-
-            if up == HIDUsagePage.SYSCONTROL and us == HIDUsage.SYSCONTROL:
+            elif up == HIDUsagePage.SYSCONTROL and us == HIDUsage.SYSCONTROL:
                 self.devices[HIDReportTypes.SYSCONTROL] = device
-                continue
 
     def hid_send(self, evt):
         # int, can be looked up in HIDReportTypes
@@ -187,6 +176,11 @@ class USBHID(AbstractHID):
         return self.devices[reporting_device_const].send_report(
             evt[1 : HID_REPORT_SIZES[reporting_device_const] + 1]
         )
+
+    def get_host_report(self):
+        if HIDReportTypes.KEYBOARD in self.devices:
+           return self.devices[HIDReportTypes.KEYBOARD].get_last_received_report()
+        return None
 
 
 class BLEHID(AbstractHID):
@@ -204,6 +198,28 @@ class BLEHID(AbstractHID):
         self.hid = HIDService()
         self.hid.protocol_mode = 0  # Boot protocol
 
+        self.devices = {}
+        self.host_report_device = None
+
+        for device in self.hid.devices:
+            us = device.usage
+            up = device.usage_page
+
+            if hasattr(device, 'report'):
+                if up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
+                    self.host_report_device = device
+            elif hasattr(device, 'send_report'):
+                if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
+                    self.devices[HIDReportTypes.CONSUMER] = device
+                elif up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
+                    self.devices[HIDReportTypes.KEYBOARD] = device
+                elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
+                    self.devices[HIDReportTypes.MOUSE] = device
+                elif up == HIDUsagePage.SYSCONTROL and us == HIDUsage.SYSCONTROL:
+                    self.devices[HIDReportTypes.SYSCONTROL] = device
+
+        print("BLE HID initialized")
+
         # Security-wise this is not right. While you're away someone turns
         # on your keyboard and they can pair with it nice and clean and then
         # listen to keystrokes.
@@ -211,39 +227,6 @@ class BLEHID(AbstractHID):
         # keystrokes in the air
         if not self.ble.connected or not self.hid.devices:
             self.start_advertising()
-
-    @property
-    def devices(self):
-        '''Search through the provided list of devices to find the ones with the
-        send_report attribute.'''
-        if not self.ble.connected:
-            return {}
-
-        result = {}
-
-        for device in self.hid.devices:
-            if not hasattr(device, 'send_report'):
-                continue
-            us = device.usage
-            up = device.usage_page
-
-            if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
-                result[HIDReportTypes.CONSUMER] = device
-                continue
-
-            if up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
-                result[HIDReportTypes.KEYBOARD] = device
-                continue
-
-            if up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
-                result[HIDReportTypes.MOUSE] = device
-                continue
-
-            if up == HIDUsagePage.SYSCONTROL and us == HIDUsage.SYSCONTROL:
-                result[HIDReportTypes.SYSCONTROL] = device
-                continue
-
-        return result
 
     def hid_send(self, evt):
         if not self.ble.connected:
@@ -260,16 +243,23 @@ class BLEHID(AbstractHID):
 
         return device.send_report(evt[1 : report_size + 1])
 
+    def get_host_report(self):
+        if self.host_report_device:
+           return self.host_report_device.report
+        return None
+
     def clear_bonds(self):
         import _bleio
 
         _bleio.adapter.erase_bonding()
 
     def start_advertising(self):
+        print('BLE HID start advertising')
         advertisement = ProvideServicesAdvertisement(self.hid)
         advertisement.appearance = self.BLE_APPEARANCE_HID_KEYBOARD
 
         self.ble.start_advertising(advertisement)
 
     def stop_advertising(self):
+        print('BLE HID stop advertising')
         self.ble.stop_advertising()

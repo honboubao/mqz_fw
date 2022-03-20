@@ -13,8 +13,7 @@ class Keyboard:
     row_pins = None
     col_pins = None
     diode_orientation = None
-    hid_device = USBHID
-    ble_name='CircuitPython Keyboard BLE'
+    hid = None
     tapping_term = 300
 
     before_resolved = None
@@ -27,7 +26,6 @@ class Keyboard:
     _mods_active = set()
     _active_layers = [0]
 
-    _hid = None
     _hid_host_report_mods = 0x00
     
     def go(self):
@@ -40,8 +38,8 @@ class Keyboard:
             print(message)
 
     def _init(self):
-        self._hid = self.hid_device()
-        # TODO what about BLE?
+        if self.hid is None:
+            self.hid = USBHID()
 
         self._matrix = MatrixScanner(
             cols=self.col_pins,
@@ -50,7 +48,7 @@ class Keyboard:
         )
 
     def _main_loop(self):
-        hid_host_report = self._hid.get_host_report()
+        hid_host_report = self.hid.get_host_report()
         if hid_host_report and hid_host_report[0] != self._hid_host_report_mods:
             self._hid_host_report_mods = hid_host_report[0]
 
@@ -74,8 +72,8 @@ class Keyboard:
         self._send_hid()
 
     def _send_hid(self): 
-        self._hid.create_report(self.resolved_key_events)
-        self._hid.send()
+        self.hid.create_report(self.resolved_key_events)
+        self.hid.send()
 
 
     def get_keymap_key(self, int_coord):

@@ -14,7 +14,7 @@ class DigitalInOut(Mock):
 
 class KeyboardTest:
     def __init__(
-        self, keymap, keyboard_debug_enabled=True, debug_enabled=True
+        self, keymap, keyboard_debug_enabled=False, debug_enabled=False
     ):
         self.debug_enabled = debug_enabled
 
@@ -29,7 +29,7 @@ class KeyboardTest:
         self.keyboard.diode_orientation = DiodeOrientation.COL2ROW
         self.keyboard.keymap = keymap
 
-        self.keyboard.hid_device = AbstractHID
+        self.keyboard.hid = AbstractHID()
 
         self.keyboard._init()
 
