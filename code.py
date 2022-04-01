@@ -2,7 +2,10 @@ print("Starting")
 
 import board
 import adafruit_dotstar
-from mqfw.hid import BLEHID
+import supervisor
+from mqfw.hid import BLEHID, USBHID
+
+ble_mode = not supervisor.runtime.usb_connected
 
 pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
 pixels[0] = (1, 0, 0, 0.05) # red
@@ -13,7 +16,10 @@ from mqfw.keyboard import Keyboard
 from mqfw.matrix import DiodeOrientation
 
 keyboard = Keyboard()
-keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE')
+if ble_mode:
+    keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE')
+else:
+    keyboard.hid = USBHID()
 keyboard.tapping_term = 200
 keyboard.debug_enabled = False
 
@@ -150,25 +156,29 @@ def on_layer_changed(layer, prev_layer):
 
 keyboard.on_layer_changed = on_layer_changed
 
-def on_tick():
-    if keyboard.hid.ble.connected:
-        pixels[0] = (0, 1, 0, 0.05) # blue
-    else:
-        pixels[0] = (0, 0, 1, 0.05) # green
+if ble_mode:
+    def on_tick():
+        if keyboard.hid.ble.connected:
+            pixels[0] = (0, 1, 0, 0.05) # blue
+        else:
+            pixels[0] = (0, 0, 1, 0.05) # green
 
-keyboard.on_tick = on_tick
+    keyboard.on_tick = on_tick
+else:
+    pixels[0] = (0, 1, 1, 0.05) # blue and green
 
 print("Started")
 
 if __name__ == '__main__':
     keyboard.go()
 
+# show circuitpython drive by entering safe mode:
+# press reset switch while LED is blinking yellow after reset/power up
 
 # TODO
 # (ZMK hold tap flavors)
-# hide circuitpy drive
 # ble powersaving
-# ble and usb
+# switch between ble and usb
 # ble multiple connections
 # ble report battery level to host
 # ble buffer hid reports until connected then replay
