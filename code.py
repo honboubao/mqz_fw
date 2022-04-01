@@ -14,7 +14,8 @@ from mqfw.matrix import DiodeOrientation
 
 keyboard = Keyboard()
 keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE')
-keyboard.debug_enabled = True
+keyboard.tapping_term = 200
+keyboard.debug_enabled = False
 
 keyboard.col_pins = (
     board.D2,
@@ -164,9 +165,8 @@ if __name__ == '__main__':
 
 
 # TODO
-# (ZMKK hold tap flavors)
+# (ZMK hold tap flavors)
 # hide circuitpy drive
-# double tap holdtap to repeat tap
 # ble powersaving
 # ble and usb
 # ble multiple connections

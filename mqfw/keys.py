@@ -119,23 +119,35 @@ class HoldTapKey(Key):
     def __init__(self, tapping_term=None):
         super().__init__(None, None, 0, 0)
         self.tapping_term = tapping_term
+        self.previous_tap_time = None
 
     def resolve(self, key_event, keyboard):
         # balanced flavour:
         #   key is resolved if 
-        #     1) tapping term expires (resolves to hold)
+        #     1) tapping term expires
+        #        1a) resolve to tap for tap-tap-hold action
+        #        1b) resolve to hold
         #     2) key is released within tapping term (resolves to tap)
         #     3) or another key is pressed and released within tapping 
         #        term and before this key is released (resolves to hold)
         if key_event.pressed:
             # 1)
             if self._tapping_term_expired(key_event, keyboard):
-                return self._resolve_hold(key_event, keyboard)
+                # 1a)
+                if self._is_double_tap(key_event, keyboard):
+                    self.previous_tap_time = key_event.time
+                    return self._resolve_tap(key_event, keyboard)
+                # 1b)
+                else:
+                    self.previous_tap_time = None
+                    return self._resolve_hold(key_event, keyboard)
             # 2)
             elif self._key_released(key_event, keyboard):
+                self.previous_tap_time = key_event.time
                 return self._resolve_tap(key_event, keyboard)
             # 3)
             elif self._other_key_tapped(key_event, keyboard):
+                self.previous_tap_time = None
                 return self._resolve_hold(key_event, keyboard)
             return False
         else:
@@ -148,6 +160,9 @@ class HoldTapKey(Key):
 
     def _tapping_term_expired(self, key_event, keyboard):
         return time_diff(now(), key_event.time) >= self.get_tapping_term(keyboard)
+
+    def _is_double_tap(self, key_event, keyboard):
+        return self.previous_tap_time is not None and time_diff(key_event.time, self.previous_tap_time) >= self.get_tapping_term(keyboard)
 
     def _key_released(self, key_event, keyboard):
         events = keyboard.unresolved_key_events[1:]
@@ -234,12 +249,12 @@ class LayerTapKey(HoldTapKey):
                 self.resolved_to = None
             return result
         elif isinstance(self.resolved_to, int):
-            keyboard.deactivate_layer(self.layer)
-            key_event.remove_all()
+            keyboard.deactivate_layer(self.resolved_to)
             self.resolved_to = None
+            key_event.remove_all()
             return True
         else:
-            self.resolved_key = None
+            self.resolved_to = None
             key_event.remove_all()
             return True
 
