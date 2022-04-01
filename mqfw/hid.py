@@ -192,6 +192,10 @@ class BLEHID(AbstractHID):
         self.ble_name = ble_name
         super().__init__()
 
+    def __repr__(self):
+        return '<{}: connected={}, advertising={}, connections={}, paired={}>'.format(
+            self.__class__.__name__, self.ble.connected, self.ble.advertising, self.ble.connections, [c.paired for c in self.ble.connections])
+
     def post_init(self):
         self.ble = BLERadio()
         self.ble.name = self.ble_name
@@ -220,17 +224,20 @@ class BLEHID(AbstractHID):
 
         print("BLE HID initialized")
 
-        # Security-wise this is not right. While you're away someone turns
-        # on your keyboard and they can pair with it nice and clean and then
-        # listen to keystrokes.
-        # On the other hand we don't have LESC so it's like shouting your
-        # keystrokes in the air
-        if not self.ble.connected or not self.hid.devices:
-            self.start_advertising()
+        self.start_advertising()
 
     def hid_send(self, evt):
         if not self.ble.connected:
             return
+
+        # the hid report would be sent to every connected host,
+        # so make sure there's only one host connected
+        for c in self.ble.connections[1:]:
+            c.disconnect()
+
+        # make sure we are talking over a secured channel to the host
+        if not self.ble.connections[0].paired:
+            self.ble.connections[0]
 
         # int, can be looked up in HIDReportTypes
         reporting_device_const = evt[0]
@@ -254,12 +261,17 @@ class BLEHID(AbstractHID):
         _bleio.adapter.erase_bonding()
 
     def start_advertising(self):
-        print('BLE HID start advertising')
+        self.stop_advertising()
+
+        # disconnect all hosts so the host connecting to this
+        # advertisement will be the only one
+        if self.ble.connected:
+            for c in self.ble.connections:
+                c.disconnect()
+
         advertisement = ProvideServicesAdvertisement(self.hid)
         advertisement.appearance = self.BLE_APPEARANCE_HID_KEYBOARD
-
         self.ble.start_advertising(advertisement)
 
     def stop_advertising(self):
-        print('BLE HID stop advertising')
         self.ble.stop_advertising()

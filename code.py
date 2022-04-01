@@ -5,7 +5,7 @@ import adafruit_dotstar
 from mqfw.hid import BLEHID
 
 pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
-pixels[0] = (0, 0, 1, 0.05)
+pixels[0] = (1, 0, 0, 0.05) # red
 
 from mqfw.keycodes import *
 from mqfw.keys import Key, KeyboardKey
@@ -73,55 +73,62 @@ modtaps = [ # mod taps
         ____, ____, FN,   ____, ____, ____, ____, ____, ____, ____,
         LSFT, SYM,  NUM,  ____, ____, LOCK, ____, NUM,  SYM,  RSFT,
         LCTL, LWIN, LALT, ____, ____, FN,   ____, RALT, RWIN, RCTL,
-        _,    _,    _,    _,    ____, ____, _,    _,    _,    _
+        _,    _,    _,    ____, _,    ____, _,    _,    _,    _
     ]
 keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
     [ # base
         Q,    W,    E,    R,    T,    Z,    U,    I,    O,    P,
         A,    S,    D,    F,    G,    H,    J,    K,    L,    Ö,
         Y,    X,    C,    V,    B,    N,    M,    Ü,    DTSS, Ä,
-        _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
+        _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
     ],
     [ # num
         DEG,  SECT, SUP2, SUP3, ____, COLN, N7,   N8,   N9,   BKSP,
         EURO, ACUT, MICR, SPC,  ____, COMM, N4,   N5,   N6,   ENT,
         ____, BSLS, ____, ____, ____, DOT,  N1,   N2,   N3,   MINS,
-        _,    _,    _,    _,    MNAV, N0,   _,    _,    _,    _
+        _,    _,    _,    MNAV, _,     N0,   _,    _,    _,    _
     ],
     [ # sym
         CIRC, DLR,  HASH, PERC, AMPR, PIPE, LCBR, RCBR, LBRC, RBRC,
         AT,   GRV,  QUOT, DQUO, QUES, EXLM, LPRN, RPRN, LABK, RABK,
         TILD, SLSH, ASTR, PLUS, MINS, EQL,  SCLN, COMM, COLN, UNDS,
-        _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
+        _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
     ],
     [ # fn
         ____, ____, ____, ____, INS,  SLCK, F7,   F8,   F9,   F10,
         LSFT, ____, ____, ____, PSCR, PAUS, F4,   F5,   F6,   F11,
         LCTL, LWIN, LALT, ____, APP,  ____, F1,   F2,   F3,   F12,
-        _,    _,    _,    _,    MNAV, SPC,  _,    _,    _,    _
+        _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
     ],
     [ # nav
         UNDO, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
         ESC,  LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
         MBBK, MBFW, BKSP, DEL,  ATAB, CTAB, CUT,  COPY, PAST, ESC,
-        _,    _,    _,    _,    MNAV, TAB,  _,    _,    _,    _
+        _,    _,    _,    MNAV, _,     TAB,  _,    _,    _,    _
     ],
     [ # lock
         ____, ____, LFN,  ____, ____, ____, ____, ____, ____, ____,
         CAPS, LSYM, LNUM, ____, ____, ____, ____, LNUM, LSYM, CAPS,
         ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-        _,    _,    _,    _,    LNAV, CLLK, _,    _,    _,    _
+        _,    _,    _,    LNAV, _,    CLLK, _,    _,    _,    _
     ]
 ])]
 
 def before_resolved(key_event):
     if key_event.pressed and (key_event.key == ATAB or key_event.key == CTAB):
         if not keyboard.is_key_pressed(ACTMOD) and keyboard.is_key_pressed(MNAV):
-            ACTMOD.mods = KC_LALT if key_event.key == ATAB else KC_LCTL
+            if key_event.key == ATAB:
+                ACTMOD.mods = KC_LALT
+                CTAB.mods = KC_LSFT
+            else:
+                ACTMOD.mods = KC_LCTL
+                ATAB.mods = KC_LSFT
             keyboard.press_key(ACTMOD)
 
     if not key_event.pressed and key_event.key == MNAV:
         if keyboard.is_key_pressed(ACTMOD):
+            ATAB.mods = 0
+            CTAB.mods = 0
             keyboard.release_key(ACTMOD)
 
 keyboard.before_resolved = before_resolved
@@ -142,8 +149,13 @@ def on_layer_changed(layer, prev_layer):
 
 keyboard.on_layer_changed = on_layer_changed
 
+def on_tick():
+    if keyboard.hid.ble.connected:
+        pixels[0] = (0, 1, 0, 0.05) # blue
+    else:
+        pixels[0] = (0, 0, 1, 0.05) # green
 
-pixels[0] = (0, 1, 0, 0.05)
+keyboard.on_tick = on_tick
 
 print("Started")
 
@@ -162,3 +174,5 @@ if __name__ == '__main__':
 # ble and usb
 # ble encryption
 # multiple ble connections
+# ble report battery level to host
+# ble buffer hid reports until connected then replay

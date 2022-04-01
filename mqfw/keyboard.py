@@ -18,6 +18,7 @@ class Keyboard:
 
     before_resolved = None
     on_layer_changed = None
+    on_tick = None
 
     # state
     unresolved_key_events = []
@@ -47,7 +48,17 @@ class Keyboard:
             diode_orientation=self.diode_orientation
         )
 
+    # prev_hid_string = ''
+
     def _main_loop(self):
+        # hid_string = self.hid.__repr__()
+        # if self.prev_hid_string != hid_string:
+        #     print(hid_string)
+        #     self.prev_hid_string = hid_string
+
+        if self.on_tick is not None:
+            self.on_tick()
+
         hid_host_report = self.hid.get_host_report()
         if hid_host_report and hid_host_report[0] != self._hid_host_report_mods:
             self._hid_host_report_mods = hid_host_report[0]
