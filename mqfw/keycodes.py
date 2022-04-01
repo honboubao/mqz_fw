@@ -226,7 +226,7 @@ BSLS = KeyboardKey(ß.keycode, KC_RALT)      # \
 # Row 2
 AT = KeyboardKey(Q.keycode, KC_RALT)        # @
 EURO = KeyboardKey(E.keycode, KC_RALT)      # €
-TILD = KeyboardKey(RBRC.keycode, KC_RALT)   # ~
+TILD = KeyboardKey(PLUS.keycode, KC_RALT)   # ~
 # Row 4
 PIPE = KeyboardKey(LABK.keycode, KC_RALT)   # |
 MICR = KeyboardKey(M.keycode, KC_RALT)      # µ

@@ -85,13 +85,13 @@ keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
     [ # num
         DEG,  SECT, SUP2, SUP3, ____, COLN, N7,   N8,   N9,   BKSP,
         EURO, ACUT, MICR, SPC,  ____, COMM, N4,   N5,   N6,   ENT,
-        ____, BSLS, ____, ____, ____, DOT,  N1,   N2,   N3,   MINS,
+        TILD, ____, ____, ____, ____, DOT,  N1,   N2,   N3,   MINS,
         _,    _,    _,    MNAV, _,     N0,   _,    _,    _,    _
     ],
     [ # sym
         CIRC, DLR,  HASH, PERC, AMPR, PIPE, LCBR, RCBR, LBRC, RBRC,
         AT,   GRV,  QUOT, DQUO, QUES, EXLM, LPRN, RPRN, LABK, RABK,
-        TILD, SLSH, ASTR, PLUS, MINS, EQL,  SCLN, COMM, COLN, UNDS,
+        BSLS, SLSH, ASTR, PLUS, MINS, EQL,  SCLN, COMM, COLN, UNDS,
         _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
     ],
     [ # fn
@@ -169,7 +169,6 @@ if __name__ == '__main__':
 # double tap holdtap to repeat tap
 # ble powersaving
 # ble and usb
-# ble encryption
 # ble multiple connections
 # ble report battery level to host
 # ble buffer hid reports until connected then replay
