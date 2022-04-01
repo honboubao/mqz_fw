@@ -12,14 +12,6 @@ except ImportError:
     pass
 
 
-class HIDModes:
-    NOOP = 0  # currently unused; for testing?
-    USB = 1
-    BLE = 2
-
-    ALL_MODES = (NOOP, USB, BLE)
-
-
 class HIDReportTypes:
     KEYBOARD = 1
     MOUSE = 2
@@ -97,20 +89,20 @@ class KeyboardReportData(HIDReportData):
                     break
 
 
-class ConsumerReportData(HIDReportData):
-    def __init__(self):
-        super().__init__(HIDReportTypes.CONSUMER)
+# class ConsumerReportData(HIDReportData):
+#     def __init__(self):
+#         super().__init__(HIDReportTypes.CONSUMER)
 
-    def process(self, hid_results):
-        self.add_keycode(hid_results.keycode)
+#     def process(self, hid_results):
+#         self.add_keycode(hid_results.keycode)
 
-    def add_keycode(self, keycode):
-        # TODO support 2-byte keycodes?
-        if keycode is not None:
-            for idx in range(0, self.size):
-                if self._evt[idx] == 0x00:
-                    self._evt[idx] = keycode
-                    break
+#     def add_keycode(self, keycode):
+#         # TODO support 2-byte keycodes?
+#         if keycode is not None:
+#             for idx in range(0, self.size):
+#                 if self._evt[idx] == 0x00:
+#                     self._evt[idx] = keycode
+#                     break
 
 
 class MouseReportData(HIDReportData):
@@ -136,7 +128,7 @@ class AbstractHID:
     def __init__(self, **kwargs):
         self.reports = {
             HIDReportTypes.KEYBOARD: KeyboardReportData(),
-            HIDReportTypes.CONSUMER: ConsumerReportData(),
+            # HIDReportTypes.CONSUMER: ConsumerReportData(),
             HIDReportTypes.MOUSE: MouseReportData()
         }
 
@@ -182,9 +174,9 @@ class USBHID(AbstractHID):
             us = device.usage
             up = device.usage_page
 
-            if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
-                self.devices[HIDReportTypes.CONSUMER] = device
-            elif up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
+            # if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
+            #     self.devices[HIDReportTypes.CONSUMER] = device
+            if up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
                 self.devices[HIDReportTypes.KEYBOARD] = device
             elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                 self.devices[HIDReportTypes.MOUSE] = device
@@ -227,9 +219,9 @@ class BLEHID(AbstractHID):
                 if up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
                     self.host_report_device = device
             elif hasattr(device, 'send_report'):
-                if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
-                    self.devices[HIDReportTypes.CONSUMER] = device
-                elif up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
+                # if up == HIDUsagePage.CONSUMER and us == HIDUsage.CONSUMER:
+                #     self.devices[HIDReportTypes.CONSUMER] = device
+                if up == HIDUsagePage.KEYBOARD and us == HIDUsage.KEYBOARD:
                     self.devices[HIDReportTypes.KEYBOARD] = device
                 elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                     self.devices[HIDReportTypes.MOUSE] = device
