@@ -24,70 +24,139 @@ class HIDReportTypes:
     KEYBOARD = 1
     MOUSE = 2
     CONSUMER = 3
-    SYSCONTROL = 4
 
 
 class HIDUsage:
     KEYBOARD = 0x06
     MOUSE = 0x02
     CONSUMER = 0x01
-    SYSCONTROL = 0x80
 
 
 class HIDUsagePage:
     CONSUMER = 0x0C
-    KEYBOARD = MOUSE = SYSCONTROL = 0x01
+    KEYBOARD = MOUSE = 0x01
 
 
 HID_REPORT_SIZES = {
     HIDReportTypes.KEYBOARD: 8,
     HIDReportTypes.MOUSE: 4,
-    HIDReportTypes.CONSUMER: 2,
-    HIDReportTypes.SYSCONTROL: 8,  # TODO find the correct value for this
+    HIDReportTypes.CONSUMER: 2
 }
 
 
+class HIDReportData:
+    def __init__(self, hid_report_type):
+        self.type = hid_report_type
+        self.size = HID_REPORT_SIZES[hid_report_type]
+        self._prev_evt = bytearray(self.size)
+        self._evt = bytearray(self.size)
+
+    def process(self, hid_results):
+        pass
+
+    def get_changed_event(self):
+        if self._evt != self._prev_evt:
+            self._prev_evt[:] = self._evt
+            return self._evt
+        return None
+
+    def clear(self):
+        for idx in range(0, self.size):
+            self._evt[idx] = 0x00
+
+
+class KeyboardReportData(HIDReportData):
+    # 8 bytes
+    #   0: mods
+    #   1: padding
+    #   2: keycode
+    #   3: keycode
+    #   4: keycode
+    #   5: keycode
+    #   6: keycode
+    #   7: keycode
+    def __init__(self):
+        super().__init__(HIDReportTypes.KEYBOARD)
+
+    def process(self, hid_results):
+        self.add_keycode(hid_results.keycode)
+        self.add_modifier(hid_results.mods)
+        self.remove_modifier(hid_results.disable_mods)
+
+    def add_modifier(self, modifier):
+        self._evt[0] |= modifier
+
+    def remove_modifier(self, modifier):
+        self._evt[0] &= ~modifier
+
+    def add_keycode(self, keycode):
+        if keycode is not None:
+            for idx in range(2, self.size):
+                if self._evt[idx] == 0x00:
+                    self._evt[idx] = keycode
+                    break
+
+
+class ConsumerReportData(HIDReportData):
+    def __init__(self):
+        super().__init__(HIDReportTypes.CONSUMER)
+
+    def process(self, hid_results):
+        self.add_keycode(hid_results.keycode)
+
+    def add_keycode(self, keycode):
+        # TODO support 2-byte keycodes?
+        if keycode is not None:
+            for idx in range(0, self.size):
+                if self._evt[idx] == 0x00:
+                    self._evt[idx] = keycode
+                    break
+
+
+class MouseReportData(HIDReportData):
+    # 4 bytes
+    #   0: buttons
+    #   1: X
+    #   2: Y
+    #   3: wheel
+    def __init__(self):
+        super().__init__(HIDReportTypes.MOUSE)
+
+    def process(self, hid_results):
+        self.add_button(hid_results.keycode)
+
+    def add_button(self, button):
+        self._evt[0] |= button
+
+    # TODO X, Y, wheel
+
+
 class AbstractHID:
-    REPORT_BYTES = 8
 
     def __init__(self, **kwargs):
-        self._prev_evt = bytearray(self.REPORT_BYTES)
-        self._evt = bytearray(self.REPORT_BYTES)
-        self.report_device = memoryview(self._evt)[0:1]
-        self.report_device[0] = HIDReportTypes.KEYBOARD
-
-        # Landmine alert for HIDReportTypes.KEYBOARD: byte index 1 of this view
-        # is "reserved" and evidently (mostly?) unused. However, other modes (or
-        # at least consumer, so far) will use this byte, which is the main reason
-        # this view exists. For KEYBOARD, use report_mods and report_non_mods
-        self.report_keys = memoryview(self._evt)[1:]
-
-        self.report_mods = memoryview(self._evt)[1:2]
-        self.report_non_mods = memoryview(self._evt)[3:]
+        self.reports = {
+            HIDReportTypes.KEYBOARD: KeyboardReportData(),
+            HIDReportTypes.CONSUMER: ConsumerReportData(),
+            HIDReportTypes.MOUSE: MouseReportData()
+        }
 
         self.post_init()
 
     def __repr__(self):
-        return '{}(REPORT_BYTES={})'.format(self.__class__.__name__, self.REPORT_BYTES)
+        return '{}'.format(self.__class__.__name__)
 
     def post_init(self):
         pass
 
     def create_report(self, resolved_key_events):
-        self.clear_all()
-
-        self.report_device[0] = HIDReportTypes.KEYBOARD # TODO consumer and mouse keys
+        for report in self.reports.values():
+            report.clear()
 
         for kevent in resolved_key_events:
-            if kevent.hid_results is None:
-                continue
-            
-            self.add_keycode(kevent.hid_results.keycode)
-            self.add_modifier(kevent.hid_results.mods)
-            self.remove_modifier(kevent.hid_results.disable_mods)
+            if kevent.hid_results is not None and kevent.hid_results.hid_type in self.reports:
+                self.reports[kevent.hid_results.hid_type].process(kevent.hid_results)
 
-
-    def hid_send(self, evt):
+    def hid_send(self, hid_report_type, evt):
         # Don't raise a NotImplementedError so this can serve as our "dummy" HID
         # when MCU/board doesn't define one to use (which should almost always be
         # the CircuitPython-targeting one, except when unit testing or doing
@@ -96,62 +165,15 @@ class AbstractHID:
         pass
 
     def send(self):
-        if self._evt != self._prev_evt:
-            self._prev_evt[:] = self._evt
-            self.hid_send(self._evt)
-
-    def clear_all(self):
-        for idx, _ in enumerate(self.report_keys):
-            self.report_keys[idx] = 0x00
-
-    def clear_non_modifiers(self):
-        for idx, _ in enumerate(self.report_non_mods):
-            self.report_non_mods[idx] = 0x00
-
-    def add_modifier(self, modifier):
-        self.report_mods[0] |= modifier
-
-    def remove_modifier(self, modifier):
-        self.report_mods[0] &= ~modifier
-
-    def add_keycode(self, keycode):
-        if keycode is None:
-            return
-            
-        # Try to find the first empty slot in the key report, and fill it
-        placed = False
-
-        where_to_place = self.report_non_mods
-
-        # TODO
-        # if self.report_device[0] == HIDReportTypes.CONSUMER:
-        #    where_to_place = self.report_keys
-
-        for idx, _ in enumerate(where_to_place):
-            if where_to_place[idx] == 0x00:
-                where_to_place[idx] = keycode
-                placed = True
-                break
-
-        if not placed:
-            # TODO what do we do here?......
-            pass
-
-    def remove_keycode(self, keycode):
-        where_to_place = self.report_non_mods
-
-        if self.report_device[0] == HIDReportTypes.CONSUMER:
-            where_to_place = self.report_keys
-
-        for idx, _ in enumerate(where_to_place):
-            if where_to_place[idx] == keycode:
-                where_to_place[idx] = 0x00
+        for type, report in self.reports.items():
+            evt = report.get_changed_event()
+            if evt is not None:
+                self.hid_send(type, evt)
 
     def get_host_report(self):
         return None
 
 class USBHID(AbstractHID):
-    REPORT_BYTES = 9
 
     def post_init(self):
         self.devices = {}
@@ -166,16 +188,10 @@ class USBHID(AbstractHID):
                 self.devices[HIDReportTypes.KEYBOARD] = device
             elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                 self.devices[HIDReportTypes.MOUSE] = device
-            elif up == HIDUsagePage.SYSCONTROL and us == HIDUsage.SYSCONTROL:
-                self.devices[HIDReportTypes.SYSCONTROL] = device
 
-    def hid_send(self, evt):
-        # int, can be looked up in HIDReportTypes
-        reporting_device_const = evt[0]
-
-        return self.devices[reporting_device_const].send_report(
-            evt[1 : HID_REPORT_SIZES[reporting_device_const] + 1]
-        )
+    def hid_send(self, hid_report_type, evt):
+        if hid_report_type in self.devices:
+            self.devices[hid_report_type].send_report(evt)
 
     def get_host_report(self):
         if HIDReportTypes.KEYBOARD in self.devices:
@@ -185,8 +201,6 @@ class USBHID(AbstractHID):
 
 class BLEHID(AbstractHID):
     BLE_APPEARANCE_HID_KEYBOARD = const(961)
-    # Hardcoded in CPy
-    MAX_CONNECTIONS = const(2)
 
     def __init__(self, ble_name=str(getmount('/').label), **kwargs):
         self.ble_name = ble_name
@@ -219,14 +233,10 @@ class BLEHID(AbstractHID):
                     self.devices[HIDReportTypes.KEYBOARD] = device
                 elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                     self.devices[HIDReportTypes.MOUSE] = device
-                elif up == HIDUsagePage.SYSCONTROL and us == HIDUsage.SYSCONTROL:
-                    self.devices[HIDReportTypes.SYSCONTROL] = device
-
-        print("BLE HID initialized")
 
         self.start_advertising()
 
-    def hid_send(self, evt):
+    def hid_send(self, hid_report_type, evt):
         if not self.ble.connected:
             return
 
@@ -239,16 +249,8 @@ class BLEHID(AbstractHID):
         if not self.ble.connections[0].paired:
             self.ble.connections[0]
 
-        # int, can be looked up in HIDReportTypes
-        reporting_device_const = evt[0]
-
-        device = self.devices[reporting_device_const]
-
-        report_size = len(device._characteristic.value)
-        while len(evt) < report_size + 1:
-            evt.append(0)
-
-        return device.send_report(evt[1 : report_size + 1])
+        if hid_report_type in self.devices:
+            self.devices[hid_report_type].send_report(evt)
 
     def get_host_report(self):
         if self.host_report_device:

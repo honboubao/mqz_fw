@@ -39,9 +39,7 @@ class KeyboardTest:
             print(testname, key_events, assert_hid_reports)
 
         hid_send_call_arg_list = []
-        hid_send.side_effect = lambda hid_report: hid_send_call_arg_list.append(
-            hid_report[1:]
-        )
+        hid_send.side_effect = lambda hid_report_type, evt: hid_send_call_arg_list.append(evt[:])
 
         for e in key_events:
             if isinstance(e, int):

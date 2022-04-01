@@ -165,14 +165,11 @@ if __name__ == '__main__':
 
 # TODO
 # (ZMKK hold tap flavors)
-# Mouse buttons 4/5
 # hide circuitpy drive
-# bluetooth multiple connections
-# ble status light
-# double tap repeat
+# double tap holdtap to repeat tap
 # ble powersaving
 # ble and usb
 # ble encryption
-# multiple ble connections
+# ble multiple connections
 # ble report battery level to host
 # ble buffer hid reports until connected then replay
