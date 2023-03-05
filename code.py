@@ -77,9 +77,9 @@ def apply_modtaps(keymap, layer):
     return [transform_modkey(key, mod, layer) for key, mod in zip(keymap, modtaps)]
 
 modtaps = [ # mod taps
-        ____, ____, FN,   ____, ____, ____, ____, ____, ____, ____,
+        ____, ____, FN,   ____, ____, ____, ____, FN,   ____, ____,
         LSFT, SYM,  NUM,  ____, ____, LOCK, ____, NUM,  SYM,  RSFT,
-        LCTL, LWIN, LALT, ____, ____, FN,   ____, RALT, RWIN, RCTL,
+        LCTL, LWIN, LALT, ____, NUM,  ____, ____, RALT, RWIN, RCTL,
         _,    _,    _,    ____, _,    ____, _,    _,    _,    _
     ]
 keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
@@ -108,23 +108,26 @@ keyboard.keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
         _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
     ],
     [ # nav
-        UNDO, HOME, UP,   END,  TAB,  PGUP, HOME, UP,   END,  BSDL,
-        ESC,  LEFT, DOWN, RGHT, ENT,  PGDN, LEFT, DOWN, RGHT, ENT,
-        MBBK, MBFW, BKSP, DEL,  ATAB, CTAB, CUT,  COPY, PAST, ESC,
+        CTAB, HOME, UP,   END,  UNDO,  PGUP, HOME, UP,   END,  BSDL,
+        ATAB, LEFT, DOWN, RGHT, ENT,   PGDN, LEFT, DOWN, RGHT, ENT,
+        ESC,  TAB,  BKSP, DEL,  MBBK,  MBFW, CUT,  COPY, PAST, ESC,
         _,    _,    _,    MNAV, _,     TAB,  _,    _,    _,    _
     ],
     [ # lock
         ____, ____, LFN,  ____, ____, ____, ____, ____, ____, ____,
         CAPS, LSYM, LNUM, ____, ____, ____, ____, LNUM, LSYM, CAPS,
-        ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+        ____, ____, ____, ____, LNUM, ____, ____, ____, ____, ____,
         _,    _,    _,    LNAV, _,    CLLK, _,    _,    _,    _
     ]
 ])]
 
+def is_key(key_event, key):
+    return (hasattr(key_event.key, 'resolved_key') and key_event.key.resolved_key == key) or key_event.key == key
+
 def before_resolved(key_event):
-    if key_event.pressed and (key_event.key == ATAB or key_event.key == CTAB):
+    if key_event.pressed and (is_key(key_event, ATAB) or is_key(key_event, CTAB)):
         if not keyboard.is_key_pressed(ACTMOD) and keyboard.is_key_pressed(MNAV):
-            if key_event.key == ATAB:
+            if is_key(key_event, ATAB):
                 ACTMOD.mods = KC_LALT
                 CTAB.mods = KC_LSFT
             else:
@@ -172,13 +175,14 @@ print("Started")
 if __name__ == '__main__':
     keyboard.go()
 
-# show circuitpython drive by entering safe mode:
-# press reset switch while LED is blinking yellow after reset/power up
 
 # TODO
 # (ZMK hold tap flavors)
+# hide circuitpy drive/show on special key
 # ble powersaving
-# switch between ble and usb
+# ble and usb
 # ble multiple connections
 # ble report battery level to host
 # ble buffer hid reports until connected then replay
+# ble explicitely enter pairing mode
+# use native keypad scanner
