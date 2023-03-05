@@ -2,6 +2,11 @@
 
 CircuitPython keyboard firmware implementation, partly adapted from [KMK](https://github.com/KMKfw/kmk_firmware)
 
+## Dependencies
+
+- adafruit_ble
+- adafruit_dotstar
+
 ## Tests
 
 To run unit tests in desktop environment: `python -m unittest`
