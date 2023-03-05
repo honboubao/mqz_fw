@@ -124,31 +124,31 @@ class HoldTapKey(Key):
     def resolve(self, key_event, keyboard):
         # balanced flavour:
         #   key is resolved if 
-        #     1) tapping term expires
-        #        1a) resolve to tap for tap-tap-hold action
-        #        1b) resolve to hold
-        #     2) key is released within tapping term (resolves to tap)
-        #     3) or another key is pressed and released within tapping 
+        #     1) another key is pressed and released within tapping
         #        term and before this key is released (resolves to hold)
+        #     2) key is released within tapping term (resolves to tap)
+        #     3) tapping term expires
+        #        3a) resolve to tap for tap-tap-hold action
+        #        3b) resolve to hold
         if key_event.pressed:
             # 1)
-            if self._tapping_term_expired(key_event, keyboard):
-                # 1a)
-                if self._is_double_tap(key_event, keyboard):
-                    self.previous_tap_time = key_event.time
-                    return self._resolve_tap(key_event, keyboard)
-                # 1b)
-                else:
-                    self.previous_tap_time = None
-                    return self._resolve_hold(key_event, keyboard)
+            if self._is_other_key_tapped_within_tapping_term(key_event, keyboard):
+                self.previous_tap_time = None
+                return self._resolve_hold(key_event, keyboard)
             # 2)
-            elif self._key_released(key_event, keyboard):
+            elif self._is_key_released_within_tapping_term(key_event, keyboard):
                 self.previous_tap_time = key_event.time
                 return self._resolve_tap(key_event, keyboard)
             # 3)
-            elif self._other_key_tapped(key_event, keyboard):
-                self.previous_tap_time = None
-                return self._resolve_hold(key_event, keyboard)
+            elif not self._is_within_tapping_term(now(), key_event, keyboard):
+                # 3a)
+                if self._is_double_tap(key_event, keyboard):
+                    self.previous_tap_time = key_event.time
+                    return self._resolve_tap(key_event, keyboard)
+                # 3b)
+                else:
+                    self.previous_tap_time = None
+                    return self._resolve_hold(key_event, keyboard)
             return False
         else:
             return self._resolve_release(key_event, keyboard)
@@ -158,26 +158,25 @@ class HoldTapKey(Key):
             return self.tapping_term
         return keyboard.tapping_term
 
-    def _tapping_term_expired(self, key_event, keyboard):
-        return time_diff(now(), key_event.time) >= self.get_tapping_term(keyboard)
+    def _is_within_tapping_term(self, time, key_event, keyboard):
+        return time_diff(time, key_event.time) <= self.get_tapping_term(keyboard)
 
     def _is_double_tap(self, key_event, keyboard):
-        return self.previous_tap_time is not None and time_diff(key_event.time, self.previous_tap_time) >= self.get_tapping_term(keyboard)
+        return self.previous_tap_time is not None and time_diff(key_event.time, self.previous_tap_time) <= self.get_tapping_term(keyboard)
 
-    def _key_released(self, key_event, keyboard):
-        events = keyboard.unresolved_key_events[1:]
-        for i, u in enumerate(events):
-            if not u.pressed and u.int_coord == key_event.int_coord:
-                return True
+    def _is_key_released_within_tapping_term(self, key_event, keyboard, key_index=0):
+        p = keyboard.unresolved_key_events[key_index]
+        events = keyboard.unresolved_key_events[key_index + 1:]
+        for u in events:
+            if not u.pressed and u.int_coord == p.int_coord:
+                return self._is_within_tapping_term(u.time, key_event, keyboard)
         return False
 
-    def _other_key_tapped(self, key_event, keyboard):
+    def _is_other_key_tapped_within_tapping_term(self, key_event, keyboard):
         events = keyboard.unresolved_key_events[1:]
         for i, p in enumerate(events):
-            if p.pressed:
-                for u in events[i + 1:]:
-                    if not u.pressed and u.int_coord == p.int_coord:
-                        return True
+            if p.pressed and self._is_key_released_within_tapping_term(key_event, keyboard, i + 1):
+                return True
         return False
 
     def _resolve_hold(self, key_event, keyboard):
