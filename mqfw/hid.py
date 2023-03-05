@@ -1,3 +1,4 @@
+import time
 import usb_hid
 from micropython import const
 
@@ -46,11 +47,11 @@ class HIDReportData:
     def process(self, hid_results):
         pass
 
-    def get_changed_event(self):
+    def get_events(self):
         if self._evt != self._prev_evt:
             self._prev_evt[:] = self._evt
-            return self._evt
-        return None
+            return [self._evt]
+        return []
 
     def clear(self):
         for idx in range(0, self.size):
@@ -69,6 +70,7 @@ class KeyboardReportData(HIDReportData):
     #   7: keycode
     def __init__(self):
         super().__init__(HIDReportTypes.KEYBOARD)
+        self._empty_evt = self._evt[:]
 
     def process(self, hid_results):
         self.add_keycode(hid_results.keycode)
@@ -87,6 +89,18 @@ class KeyboardReportData(HIDReportData):
                 if self._evt[idx] == 0x00:
                     self._evt[idx] = keycode
                     break
+
+    def get_events(self):
+        if self._evt != self._prev_evt:
+            events = [self._evt]
+            # send mods first in a separate event
+            if self._prev_evt == self._empty_evt and self._evt[0] > 0 and [kc for kc in self._evt[1:] if kc > 0]:
+                mods_evt = self._empty_evt[:]
+                mods_evt[0] = self._evt[0]
+                events.insert(0, mods_evt)
+            self._prev_evt[:] = self._evt
+            return events
+        return []
 
 
 # class ConsumerReportData(HIDReportData):
@@ -158,8 +172,9 @@ class AbstractHID:
 
     def send(self):
         for type, report in self.reports.items():
-            evt = report.get_changed_event()
-            if evt is not None:
+            for i, evt in enumerate(report.get_events()):
+                if i > 0:
+                    time.sleep(.05)
                 self.hid_send(type, evt)
 
     def get_host_report(self):
@@ -234,8 +249,9 @@ class BLEHID(AbstractHID):
 
         # the hid report would be sent to every connected host,
         # so make sure there's only one host connected
-        for c in self.ble.connections[1:]:
-            c.disconnect()
+        if len(self.ble.connections) > 1:
+            for c in self.ble.connections[1:]:
+                c.disconnect()
 
         # make sure we are talking over a secured channel to the host
         if not self.ble.connections[0].paired:
