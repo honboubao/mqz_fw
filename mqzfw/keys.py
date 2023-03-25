@@ -1,6 +1,6 @@
-from mqfw.hid import HIDReportTypes
-from mqfw.time import now, time_diff
-from mqfw.utils import find
+from mqzfw.hid import HIDReportTypes
+from mqzfw.time import now, time_diff
+from mqzfw.utils import find
 
 
 # KC_NUMLOCK = 0x01

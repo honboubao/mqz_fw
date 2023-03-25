@@ -1,5 +1,5 @@
 import digitalio
-from mqfw.keys import KeyEvent
+from mqzfw.keys import KeyEvent
 
 
 

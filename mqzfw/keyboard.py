@@ -1,8 +1,8 @@
-from mqfw.hid import BLEHID, USBHID
-from mqfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
-from mqfw.matrix import MatrixScanner
-from mqfw.utils import find
-import mqfw.keycodes as KC
+from mqzfw.hid import BLEHID, USBHID
+from mqzfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
+from mqzfw.matrix import MatrixScanner
+from mqzfw.utils import find
+import mqzfw.keycodes as KC
 
 class Keyboard:
     debug_enabled = False

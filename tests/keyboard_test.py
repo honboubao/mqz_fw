@@ -3,9 +3,9 @@ import time
 from functools import reduce
 from unittest.mock import Mock, patch
 
-from mqfw.keyboard import Keyboard
-from mqfw.hid import AbstractHID
-from mqfw.matrix import DiodeOrientation
+from mqzfw.keyboard import Keyboard
+from mqzfw.hid import AbstractHID
+from mqzfw.matrix import DiodeOrientation
 
 
 class DigitalInOut(Mock):
@@ -33,7 +33,7 @@ class KeyboardTest:
 
         self.keyboard._init()
 
-    @patch('mqfw.hid.AbstractHID.hid_send')
+    @patch('mqzfw.hid.AbstractHID.hid_send')
     def test(self, testname, key_events, assert_hid_reports, hid_send):
         if self.debug_enabled:
             print(testname, key_events, assert_hid_reports)

@@ -1,6 +1,6 @@
 import unittest
 
-import mqfw.keycodes as KC
+import mqzfw.keycodes as KC
 from tests.keyboard_test import KeyboardTest
 
 

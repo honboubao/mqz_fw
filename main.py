@@ -3,17 +3,17 @@ print("Starting")
 import board
 import adafruit_dotstar
 import supervisor
-from mqfw.hid import BLEHID, USBHID
+from mqzfw.hid import BLEHID, USBHID
 
 ble_mode = not supervisor.runtime.usb_connected
 
 pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
 pixels[0] = (1, 0, 0, 0.05) # red
 
-from mqfw.keycodes import *
-from mqfw.keys import Key, KeyboardKey
-from mqfw.keyboard import Keyboard
-from mqfw.matrix import DiodeOrientation
+from mqzfw.keycodes import *
+from mqzfw.keys import Key, KeyboardKey
+from mqzfw.keyboard import Keyboard
+from mqzfw.matrix import DiodeOrientation
 
 keyboard = Keyboard()
 if ble_mode:
