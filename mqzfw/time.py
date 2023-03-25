@@ -10,7 +10,7 @@ def now():
 
 def time_add(ticks, delta):
     "Add a delta to a base number of ticks, performing wraparound at 2**29ms."
-    return (a + b) % _TICKS_PERIOD
+    return (ticks + delta) % _TICKS_PERIOD
 
 def time_diff(ticks1, ticks2):
     "Compute the signed difference between two ticks values, assuming that they are within 2**28 ticks"

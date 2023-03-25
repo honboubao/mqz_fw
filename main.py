@@ -1,20 +1,65 @@
-print("Starting")
+print("Starting main.py")
 
 import board
-import adafruit_dotstar
-import supervisor
-from mqzfw.hid import BLEHID, USBHID
+print('board_id: ' + board.board_id)
+print('pins:')
+print(dir(board))
 
+import supervisor
 ble_mode = not supervisor.runtime.usb_connected
 
-pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
-pixels[0] = (1, 0, 0, 0.05) # red
+from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
+
+# board specific stuff
+pixels = None
+col_pins = None
+row_pins = None
+status_led = None
+
+if board.board_id == 'itsybitsy_nrf52840_express':
+    status_led = DotStarStatusLed(board.APA102_SCK, board.APA102_MOSI)
+    col_pins = (
+        board.D2,
+        board.D0,
+        board.D1,
+        board.D5,
+        board.D7,
+        board.D9,
+        board.D10,
+        board.D11,
+        board.D12,
+        board.D13,
+    )
+    row_pins = (board.A0, board.A1, board.A2, board.A3)
+
+elif board.board_id == 'nice_nano':
+    status_led = SimpleStatusLed(board.LED)
+    col_pins = (
+        board.P0_06,
+        board.P0_08,
+        board.P0_17,
+        board.P0_20,
+        board.P0_22,
+        board.P0_24,
+        board.P1_00,
+        board.P0_11,
+        board.P1_04,
+        board.P1_06,
+    )
+    row_pins = (board.P1_13, board.P1_11, board.P0_10, board.P0_09)
+
+else:
+    print("Unknown board. Exit.")
+    exit()
+
+status_led.set_status(LED_STATUS.STARTUP)
 
 from mqzfw.keycodes import *
 from mqzfw.keys import Key, KeyboardKey
 from mqzfw.keyboard import Keyboard
 from mqzfw.matrix import DiodeOrientation
 
+from mqzfw.hid import BLEHID, USBHID
 keyboard = Keyboard()
 if ble_mode:
     keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE')
@@ -23,19 +68,8 @@ else:
 keyboard.tapping_term = 200
 keyboard.debug_enabled = False
 
-keyboard.col_pins = (
-    board.D2,
-    board.D0,
-    board.D1,
-    board.D5,
-    board.D7,
-    board.D9,
-    board.D10,
-    board.D11,
-    board.D12,
-    board.D13,
-)
-keyboard.row_pins = (board.A0, board.A1, board.A2, board.A3)
+keyboard.col_pins = col_pins
+keyboard.row_pins = row_pins
 keyboard.diode_orientation = DiodeOrientation.COL2ROW
 
 _ = XXXX
@@ -162,13 +196,18 @@ keyboard.on_layer_changed = on_layer_changed
 if ble_mode:
     def on_tick():
         if keyboard.hid.ble.connected:
-            pixels[0] = (0, 1, 0, 0.05) # blue
+            status_led.set_status(LED_STATUS.BLE_CONNECTED)
         else:
-            pixels[0] = (0, 0, 1, 0.05) # green
+            status_led.set_status(LED_STATUS.BLE_CONNECTING)
+        status_led.tick()
 
     keyboard.on_tick = on_tick
 else:
-    pixels[0] = (0, 1, 1, 0.05) # blue and green
+    def on_tick():
+        status_led.tick()
+
+    keyboard.on_tick = on_tick
+    status_led.set_status(LED_STATUS.USB_CONNECTED)
 
 print("Started")
 
