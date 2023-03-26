@@ -107,7 +107,11 @@ class SimpleStatusLed(StatusLed):
         elif status == LED_STATUS.BLE_CONNECTING:
             self.set_animation([[0, (1, 1, 1, .05)], [.5, (0, 0, 0, 0)]])
         elif status == LED_STATUS.BLE_CONNECTED:
-            self.set_color((1, 1, 1, .01))
+            self.set_animation([
+                [0,   (1, 1, 1, .01)],
+                [.9,  (1, 1, 1, .01)],
+                [.95, (0, 0, 0, 0)]],
+                .25)
         elif status == LED_STATUS.LOW_BATTERY:
             self.set_animation([
                 [0,   (1, 1, 1, .05)],

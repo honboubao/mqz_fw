@@ -1,14 +1,10 @@
 print("Starting main.py")
 
+import supervisor
 import board
 print('board_id: ' + board.board_id)
 print('pins:')
 print(dir(board))
-
-import supervisor
-ble_mode = not supervisor.runtime.usb_connected
-
-print(('BLE' if ble_mode else 'USB') + ' mode')
 
 from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
 from mqzfw.matrix import DiodeOrientation
@@ -58,18 +54,15 @@ else:
     print("Unknown board. Exit.")
     exit()
 
-status_led.set_status(LED_STATUS.STARTUP)
-
 from mqzfw.keycodes import *
 from mqzfw.keys import Key, KeyboardKey
 from mqzfw.keyboard import Keyboard
 
 from mqzfw.hid import BLEHID, USBHID
 keyboard = Keyboard()
-if ble_mode:
-    keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE')
-else:
-    keyboard.hid = USBHID()
+
+ble_mode = not supervisor.runtime.usb_connected
+keyboard.hid = BLEHID(ble_name='Micro Qwertz BLE') if ble_mode else USBHID()
 keyboard.tapping_term = 200
 keyboard.debug_enabled = False
 
