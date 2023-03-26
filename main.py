@@ -8,12 +8,16 @@ print(dir(board))
 import supervisor
 ble_mode = not supervisor.runtime.usb_connected
 
+print(('BLE' if ble_mode else 'USB') + ' mode')
+
 from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
+from mqzfw.matrix import DiodeOrientation
 
 # board specific stuff
 pixels = None
 col_pins = None
 row_pins = None
+diode_orientation = None
 status_led = None
 
 if board.board_id == 'itsybitsy_nrf52840_express':
@@ -31,6 +35,7 @@ if board.board_id == 'itsybitsy_nrf52840_express':
         board.D13,
     )
     row_pins = (board.A0, board.A1, board.A2, board.A3)
+    diode_orientation = DiodeOrientation.COL2ROW
 
 elif board.board_id == 'nice_nano':
     status_led = SimpleStatusLed(board.LED)
@@ -46,7 +51,8 @@ elif board.board_id == 'nice_nano':
         board.P1_04,
         board.P1_06,
     )
-    row_pins = (board.P1_13, board.P1_11, board.P0_10, board.P0_09)
+    row_pins = (board.P0_09, board.P0_10, board.P1_11, board.P1_13)
+    diode_orientation = DiodeOrientation.ROW2COL
 
 else:
     print("Unknown board. Exit.")
@@ -57,7 +63,6 @@ status_led.set_status(LED_STATUS.STARTUP)
 from mqzfw.keycodes import *
 from mqzfw.keys import Key, KeyboardKey
 from mqzfw.keyboard import Keyboard
-from mqzfw.matrix import DiodeOrientation
 
 from mqzfw.hid import BLEHID, USBHID
 keyboard = Keyboard()
@@ -70,7 +75,7 @@ keyboard.debug_enabled = False
 
 keyboard.col_pins = col_pins
 keyboard.row_pins = row_pins
-keyboard.diode_orientation = DiodeOrientation.COL2ROW
+keyboard.diode_orientation = diode_orientation
 
 _ = XXXX
 ____ = XXXX
