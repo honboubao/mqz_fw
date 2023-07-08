@@ -21,6 +21,7 @@ class StatusLed:
         pass
 
     def set_color(self, color):
+        self.status = None
         self.keyframes = None
         self.color = color
         self.set_led(color)
@@ -31,6 +32,7 @@ class StatusLed:
             keyframes (list of tuples): Each tuple contains a time value (between 0-1) and an RGB color tuple and an optional easing function.
             frequency (float): How fast the animation plays in Hz
         """
+        self.status = None
         self.color = None
         self.keyframes = keyframes
         if keyframes[0][0] > 0:
@@ -93,12 +95,11 @@ class SimpleStatusLed(StatusLed):
         self.led = pwmio.PWMOut(led_pin, frequency=5000, duty_cycle=0)
 
     def set_led(self, rgba_color):
-        self.led.duty_cycle = int(65535 * rgba_color[3])
+        self.led.duty_cycle = int(65535 * rgba_color[0] * rgba_color[1] * rgba_color[2] * rgba_color[3])
 
     def set_status(self, status):
         if self.status == status:
             return
-        self.status = status
 
         if status == LED_STATUS.STARTUP:
             self.set_color((1, 1, 1, .5))
@@ -121,6 +122,7 @@ class SimpleStatusLed(StatusLed):
                 [1,   (1, 1, 1, .01)]],
                 .2)
 
+        self.status = status
 
 class DotStarStatusLed(StatusLed):
 
@@ -135,7 +137,6 @@ class DotStarStatusLed(StatusLed):
     def set_status(self, status):
         if self.status == status:
             return
-        self.status = status
 
         if status == LED_STATUS.STARTUP:
             self.set_color((0, 0, 1, .5))
@@ -147,3 +148,5 @@ class DotStarStatusLed(StatusLed):
             self.set_color((0, 0, 1, .05))
         elif status == LED_STATUS.LOW_BATTERY:
             self.set_color((1, 0, 0, .05))
+
+        self.status = status
