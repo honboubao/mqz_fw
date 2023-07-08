@@ -79,6 +79,8 @@ class KeyEvent:
             self.parent.remove_all()
         self.remove()
 
+    def is_key(self, key):
+        return self.key.isKey(key)
 
 class Key:
     def __init__(self, hid_type, keycode, mods=0, disable_mods=0):
@@ -99,6 +101,8 @@ class Key:
             key_event.remove_all()
         return True
 
+    def isKey(self, key):
+        return self == key
 
 class KeyboardKey(Key):
     def __init__(self, keycode, mods=0, disable_mods=0):
@@ -220,6 +224,8 @@ class ModTapKey(HoldTapKey):
             key_event.remove_all()
             return True
 
+    def isKey(self, key):
+        return self.resolved_key == key
 
 class LayerTapKey(HoldTapKey):
     def __init__(self, layer, tap_key, tapping_term=None):
@@ -360,3 +366,6 @@ class ShiftOverrideKey(Key):
         else:
             key_event.remove_all()
             return True
+
+    def isKey(self, key):
+        return self.resolved_key == key
