@@ -3,8 +3,6 @@ print("Starting main.py")
 import supervisor
 import board
 print('board_id: ' + board.board_id)
-print('pins:')
-print(dir(board))
 
 from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
 from mqzfw.matrix import DiodeOrientation
@@ -52,6 +50,8 @@ elif board.board_id == 'nice_nano':
 
 else:
     print("Unknown board. Exit.")
+    print('pins:')
+    print(dir(board))
     exit()
 
 from mqzfw.keycodes import *
