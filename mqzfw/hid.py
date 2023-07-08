@@ -8,6 +8,9 @@ try:
     from adafruit_ble import BLERadio
     from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
     from adafruit_ble.services.standard.hid import HIDService
+
+    ble = BLERadio()
+    ble.stop_advertising()
 except ImportError:
     # BLE not supported on this platform
     pass
@@ -218,7 +221,7 @@ class BLEHID(AbstractHID):
             self.__class__.__name__, self.ble.connected, self.ble.advertising, self.ble.connections, [c.paired for c in self.ble.connections])
 
     def post_init(self):
-        self.ble = BLERadio()
+        self.ble = ble
         self.ble.name = self.ble_name
         self.hid = HIDService()
         self.hid.protocol_mode = 0  # Boot protocol
@@ -255,7 +258,7 @@ class BLEHID(AbstractHID):
 
         # make sure we are talking over a secured channel to the host
         if not self.ble.connections[0].paired:
-            self.ble.connections[0]
+            self.ble.connections[0].pair()
 
         if hid_report_type in self.devices:
             self.devices[hid_report_type].send_report(evt)
