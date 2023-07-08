@@ -1,7 +1,7 @@
-from mqzfw.hid import BLEHID, USBHID
+from mqzfw.hid import USBHID
 from mqzfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
 from mqzfw.matrix import MatrixScanner
-from mqzfw.utils import find
+from misc.utils import find
 import mqzfw.keycodes as KC
 
 class Keyboard:
@@ -47,6 +47,9 @@ class Keyboard:
             rows=self.row_pins,
             diode_orientation=self.diode_orientation
         )
+
+    def deinit(self):
+        self._matrix.deinit()
 
     # prev_hid_string = ''
 

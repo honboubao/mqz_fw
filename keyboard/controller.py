@@ -82,4 +82,4 @@ def setup_keyboard(ble_mode, ble_name):
         keyboard.on_tick = on_tick
         status_led.set_status(LED_STATUS.USB_CONNECTED)
 
-    return keyboard
+    return keyboard, status_led

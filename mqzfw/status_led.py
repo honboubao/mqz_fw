@@ -14,6 +14,9 @@ class StatusLed:
     def __init__(self):
         self.status = None
 
+    def deinit(self):
+        pass
+
     def set_status(self, status):
         pass
 
@@ -94,6 +97,9 @@ class SimpleStatusLed(StatusLed):
         import pwmio
         self.led = pwmio.PWMOut(led_pin, frequency=5000, duty_cycle=0)
 
+    def deinit(self):
+        self.led.deinit()
+
     def set_led(self, rgba_color):
         self.led.duty_cycle = int(65535 * rgba_color[0] * rgba_color[1] * rgba_color[2] * rgba_color[3])
 
@@ -130,6 +136,9 @@ class DotStarStatusLed(StatusLed):
         super().__init__()
         import adafruit_dotstar
         self.pixels = adafruit_dotstar.DotStar(pin_1, pin_2, 1)
+
+    def deinit(self):
+        self.pixels.deinit()
 
     def set_led(self, rgba_color):
         self.pixels[0] = rgba_color

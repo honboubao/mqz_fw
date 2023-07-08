@@ -8,9 +8,15 @@ try:
     from adafruit_ble import BLERadio
     from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
     from adafruit_ble.services.standard.hid import HIDService
-
     ble = BLERadio()
     ble.stop_advertising()
+
+    BLE_APPEARANCE_HID_KEYBOARD = const(961)
+
+    ble_hid = HIDService()
+    ble_hid.protocol_mode = 0  # Boot protocol
+    ble_advertisement = ProvideServicesAdvertisement(ble_hid)
+    ble_advertisement.appearance = BLE_APPEARANCE_HID_KEYBOARD
 except ImportError:
     # BLE not supported on this platform
     pass
@@ -210,26 +216,21 @@ class USBHID(AbstractHID):
 
 
 class BLEHID(AbstractHID):
-    BLE_APPEARANCE_HID_KEYBOARD = const(961)
-
     def __init__(self, ble_name=str(getmount('/').label), **kwargs):
-        self.ble_name = ble_name
         super().__init__()
+        self.ble = ble
+        ble.name = ble_name
 
     def __repr__(self):
         return '<{}: connected={}, advertising={}, connections={}, paired={}>'.format(
-            self.__class__.__name__, self.ble.connected, self.ble.advertising, self.ble.connections, [c.paired for c in self.ble.connections])
+            self.__class__.__name__, ble.connected, ble.advertising, ble.connections, [c.paired for c in ble.connections])
 
     def post_init(self):
-        self.ble = ble
-        self.ble.name = self.ble_name
-        self.hid = HIDService()
-        self.hid.protocol_mode = 0  # Boot protocol
 
         self.devices = {}
         self.host_report_device = None
 
-        for device in self.hid.devices:
+        for device in ble_hid.devices:
             us = device.usage
             up = device.usage_page
 
@@ -247,18 +248,18 @@ class BLEHID(AbstractHID):
         self.start_advertising()
 
     def hid_send(self, hid_report_type, evt):
-        if not self.ble.connected:
+        if not ble.connected:
             return
 
         # the hid report would be sent to every connected host,
         # so make sure there's only one host connected
-        if len(self.ble.connections) > 1:
-            for c in self.ble.connections[1:]:
+        if len(ble.connections) > 1:
+            for c in ble.connections[1:]:
                 c.disconnect()
 
         # make sure we are talking over a secured channel to the host
-        if not self.ble.connections[0].paired:
-            self.ble.connections[0].pair()
+        if not ble.connections[0].paired:
+            ble.connections[0].pair()
 
         if hid_report_type in self.devices:
             self.devices[hid_report_type].send_report(evt)
@@ -278,13 +279,11 @@ class BLEHID(AbstractHID):
 
         # disconnect all hosts so the host connecting to this
         # advertisement will be the only one
-        if self.ble.connected:
-            for c in self.ble.connections:
+        if ble.connected:
+            for c in ble.connections:
                 c.disconnect()
 
-        advertisement = ProvideServicesAdvertisement(self.hid)
-        advertisement.appearance = self.BLE_APPEARANCE_HID_KEYBOARD
-        self.ble.start_advertising(advertisement)
+        ble.start_advertising(ble_advertisement)
 
     def stop_advertising(self):
-        self.ble.stop_advertising()
+        ble.stop_advertising()

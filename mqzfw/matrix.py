@@ -2,7 +2,6 @@ import digitalio
 from mqzfw.keys import KeyEvent
 
 
-
 def intify_coordinate(row, col, len_cols):
     return len_cols * row + col
 
@@ -52,33 +51,15 @@ class MatrixScanner:
         # does not use the digitalio.DigitalInOut, but rather a self defined one:
         # https://github.com/adafruit/Adafruit_CircuitPython_MCP230xx/blob/3f04abbd65ba5fa938fcb04b99e92ae48a8c9406/adafruit_mcp230xx/digital_inout.py#L33
 
+        rowPins = [digitalio.DigitalInOut(y) for y in rows]
+        colPins = [digitalio.DigitalInOut(x) for x in cols]
         if self.diode_orientation == DiodeOrientation.COLUMNS:
-            self.outputs = [
-                x
-                if x.__class__.__name__ == 'DigitalInOut'
-                else digitalio.DigitalInOut(x)
-                for x in cols
-            ]
-            self.inputs = [
-                x
-                if x.__class__.__name__ == 'DigitalInOut'
-                else digitalio.DigitalInOut(x)
-                for x in rows
-            ]
+            self.outputs = colPins
+            self.inputs = rowPins
             self.translate_coords = True
         elif self.diode_orientation == DiodeOrientation.ROWS:
-            self.outputs = [
-                x
-                if x.__class__.__name__ == 'DigitalInOut'
-                else digitalio.DigitalInOut(x)
-                for x in rows
-            ]
-            self.inputs = [
-                x
-                if x.__class__.__name__ == 'DigitalInOut'
-                else digitalio.DigitalInOut(x)
-                for x in cols
-            ]
+            self.outputs = rowPins
+            self.inputs = colPins
             self.translate_coords = False
         else:
             raise ValueError(
@@ -97,6 +78,10 @@ class MatrixScanner:
 
         self.len_state_arrays = self.len_cols * self.len_rows
         self.state = bytearray(self.len_state_arrays)
+
+    def deinit(self):
+        for pin in self.inputs + self.outputs:
+            pin.deinit()
 
     def scan_for_changes(self):
         '''
