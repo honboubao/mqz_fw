@@ -1,4 +1,4 @@
-from mqzfw.time import now, time_diff, time_add
+from misc.time import now, time_diff, time_add
 
 
 class LED_STATUS:

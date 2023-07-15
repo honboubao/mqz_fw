@@ -3,12 +3,19 @@ print("Starting main.py")
 import gc
 import traceback
 import supervisor
-from mqzfw.time import now, time_diff
+from misc.time import now, time_diff
+from misc.switch import switch_pressed
 
 from keyboard.controller import setup_keyboard
 from keyboard.layout import setup_layout
 
-ble_mode = not supervisor.runtime.usb_connected
+ble_mode = False #not supervisor.runtime.usb_connected
+
+# upper right switch
+if board.board_id == 'itsybitsy_nrf52840_express':
+    ble_mode = switch_pressed(board.D13, board.A0)
+elif board.board_id == 'nice_nano':
+    ble_mode = switch_pressed(board.P0_09, board.P1_06)
 
 i = 0
 last_exception = 0
@@ -30,10 +37,10 @@ while i < 5:
             i = 0
 
     except Exception as e:
-        last_exception = now
+        last_exception = now()
         i += 1
 
-        traceback.print_exception(error)
+        traceback.print_exception(e)
 
         try:
             error = traceback.format_exception(e)

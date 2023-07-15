@@ -3,6 +3,7 @@ import usb_hid
 from micropython import const
 
 from storage import getmount
+from misc.time import wait
 
 try:
     from adafruit_ble import BLERadio
@@ -102,10 +103,16 @@ class KeyboardReportData(HIDReportData):
     def get_events(self):
         if self._evt != self._prev_evt:
             events = [self._evt]
-            # send mods first in a separate event
+            # send mods in a separate event for events that trigger mod and key simultaneously
+            # press mods first for press events
             if self._prev_evt == self._empty_evt and self._evt[0] > 0 and [kc for kc in self._evt[1:] if kc > 0]:
                 mods_evt = self._empty_evt[:]
                 mods_evt[0] = self._evt[0]
+                events.insert(0, mods_evt)
+            # keep mods pressed first for release events
+            if self._evt == self._empty_evt and self._prev_evt[0] > 0 and [kc for kc in self._prev_evt[1:] if kc > 0]:
+                mods_evt = self._empty_evt[:]
+                mods_evt[0] = self._prev_evt[0]
                 events.insert(0, mods_evt)
             self._prev_evt[:] = self._evt
             return events
@@ -183,7 +190,7 @@ class AbstractHID:
         for type, report in self.reports.items():
             for i, evt in enumerate(report.get_events()):
                 if i > 0:
-                    time.sleep(.05)
+                    wait(30)
                 self.hid_send(type, evt)
 
     def get_host_report(self):

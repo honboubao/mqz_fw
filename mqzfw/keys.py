@@ -1,5 +1,5 @@
 from mqzfw.hid import HIDReportTypes
-from mqzfw.time import now, time_diff
+from misc.time import now, time_diff
 from misc.utils import find
 
 
