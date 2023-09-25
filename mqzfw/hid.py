@@ -224,9 +224,9 @@ class USBHID(AbstractHID):
 
 class BLEHID(AbstractHID):
     def __init__(self, ble_name=str(getmount('/').label), **kwargs):
-        super().__init__()
         self.ble = ble
         ble.name = ble_name
+        super().__init__()
 
     def __repr__(self):
         return '<{}: connected={}, advertising={}, connections={}, paired={}>'.format(
