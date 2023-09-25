@@ -67,11 +67,16 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard.diode_orientation = diode_orientation
 
     if ble_mode:
+        was_connected = keyboard.hid.ble.connected
         def on_tick():
+            nonlocal was_connected
             if keyboard.hid.ble.connected:
                 status_led.set_status(LED_STATUS.BLE_CONNECTED)
             else:
+                if was_connected:
+                    keyboard.hid.start_advertising()
                 status_led.set_status(LED_STATUS.BLE_CONNECTING)
+            was_connected = keyboard.hid.ble.connected
             status_led.tick()
 
         keyboard.on_tick = on_tick
