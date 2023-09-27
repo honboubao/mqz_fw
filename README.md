@@ -9,6 +9,8 @@ Specially built to be used with the [Micro Qwertz keyboard layout](http://www.ke
 - adafruit_ble
 - adafruit_dotstar
 
+Download libraries from [https://circuitpython.org/libraries](https://circuitpython.org/libraries) for the appropriate CircuitPython version of your board (see boot_out.txt on your board) and copy the libraries to the lib folder on your board.
+
 ## Tests
 
 To run unit tests in desktop environment: `python -m unittest`
