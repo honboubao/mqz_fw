@@ -3,6 +3,7 @@ print("Starting main.py")
 import gc
 import traceback
 import supervisor
+import board
 from misc.time import now, time_diff
 from misc.switch import switch_pressed
 
