@@ -67,8 +67,8 @@ def setup_layout(keyboard):
             _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
         ],
         [ # fn
-            ____, ____, ____, ____, INS,  SLCK, F7,   F8,   F9,   F10,
-            LSFT, ____, ____, ____, PSCR, PAUS, F4,   F5,   F6,   F11,
+            ____, ____, ____, PSCR, SLCK, PAUS, F7,   F8,   F9,   F10,
+            LSFT, ____, ____, ____, INS,  ____, F4,   F5,   F6,   F11,
             LCTL, LWIN, LALT, ____, APP,  ____, F1,   F2,   F3,   F12,
             _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
         ],
