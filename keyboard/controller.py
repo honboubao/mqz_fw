@@ -3,6 +3,7 @@ from digitalio import DigitalInOut, Direction, Pull
 
 from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
 from mqzfw.matrix import DiodeOrientation
+from mqzfw.nrf_power import deep_sleep
 
 from mqzfw.hid import BLEHID, USBHID
 from mqzfw.keyboard import Keyboard
@@ -15,7 +16,9 @@ def setup_keyboard(ble_mode, ble_name):
     row_pins = None
     diode_orientation = None
     status_led = None
-    lock_pin = None
+    lock_switch = None
+    power_pin = None
+    power_switch = None
 
     if board.board_id == 'itsybitsy_nrf52840_express':
         status_led = DotStarStatusLed(board.APA102_SCK, board.APA102_MOSI)
@@ -77,9 +80,14 @@ def setup_keyboard(ble_mode, ble_name):
         row_pins = (board.P0_09, board.P0_10, board.P1_11, board.P1_13)
         diode_orientation = DiodeOrientation.ROW2COL
 
-        lock_pin = DigitalInOut(board.P0_31)
-        lock_pin.direction = Direction.INPUT
-        lock_pin.pull = Pull.UP
+        lock_switch = DigitalInOut(board.P0_31)
+        lock_switch.direction = Direction.INPUT
+        lock_switch.pull = Pull.UP
+
+        power_pin = board.P0_29
+        power_switch = DigitalInOut(power_pin)
+        power_switch.direction = Direction.INPUT
+        power_switch.pull = Pull.UP
 
     else:
         print("Unknown board. Exit.")
@@ -99,8 +107,15 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard.diode_orientation = diode_orientation
 
     def base_on_tick():
-        if lock_pin is not None:
-            keyboard.set_lock(not lock_pin.value)
+        if lock_switch is not None:
+            # switch position lock -> lock_switch.value = False / switch position unlock -> lock_switch.value = True
+            keyboard.set_lock(not lock_switch.value)
+
+        if power_switch is not None and power_pin is not None:
+            # switch position off -> power_switch.value = True / switch position off -> lock_switch.value = False
+            if power_switch.value:
+                deep_sleep(power_pin)
+
         status_led.tick()
 
     if ble_mode:
@@ -122,12 +137,23 @@ def setup_keyboard(ble_mode, ble_name):
         status_led.set_status(LED_STATUS.USB_CONNECTED)
 
     def deinit():
+        del col_pins
+        del row_pins
+        del diode_orientation
+
         keyboard.deinit()
         del keyboard
+
         status_led.deinit()
         del status_led
-        if lock_pin is not None:
-            lock_pin.deinit()
-            del lock_pin
+
+        if lock_switch is not None:
+            lock_switch.deinit()
+            del lock_switch
+
+        del power_pin
+        if power_switch is not None:
+            power_switch.deinit()
+            del power_switch
 
     return keyboard, deinit

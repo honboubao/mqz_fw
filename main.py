@@ -10,13 +10,14 @@ from misc.switch import switch_pressed
 from keyboard.controller import setup_keyboard
 from keyboard.layout import setup_layout
 
-ble_mode = False #not supervisor.runtime.usb_connected
+# TODO use nrf EVENTS_USBDETECTED register?
+ble_mode = True #not supervisor.runtime.usb_connected
 
 # upper right switch
 if board.board_id == 'itsybitsy_nrf52840_express':
-    ble_mode = switch_pressed(board.D13, board.A0)
+    ble_mode = not switch_pressed(board.D13, board.A0)
 elif board.board_id == 'nice_nano':
-    ble_mode = switch_pressed(board.P0_09, board.P1_06)
+    ble_mode = not switch_pressed(board.P0_09, board.P1_06)
 
 i = 0
 last_exception = 0
@@ -52,6 +53,8 @@ while i < 5:
             traceback.print_exception(log_e)
 
         deinit()
+        del keyboard
+        del deinit
         gc.collect()
 
 
@@ -66,3 +69,9 @@ while i < 5:
 # ble explicitely enter pairing mode
 # use native keypad scanner
 # fix unit tests
+
+
+# Reset into UF2 bootloader: connect via serial port, start REPL with crtl+D, execute:
+# import microcontroller
+# microcontroller.on_next_reset(microcontroller.RunMode.UF2)
+# microcontroller.reset()
