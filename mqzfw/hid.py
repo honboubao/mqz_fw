@@ -1,3 +1,4 @@
+import traceback
 import time
 import usb_hid
 from micropython import const
@@ -53,6 +54,7 @@ class HIDReportData:
         self.size = HID_REPORT_SIZES[hid_report_type]
         self._prev_evt = bytearray(self.size)
         self._evt = bytearray(self.size)
+        self._empty_evt = bytearray(self.size)
 
     def process(self, hid_results):
         pass
@@ -62,6 +64,9 @@ class HIDReportData:
             self._prev_evt[:] = self._evt
             return [self._evt]
         return []
+
+    def get_empty_event(self):
+        return self._empty_evt
 
     def clear(self):
         for idx in range(0, self.size):
@@ -80,7 +85,6 @@ class KeyboardReportData(HIDReportData):
     #   7: keycode
     def __init__(self):
         super().__init__(HIDReportTypes.KEYBOARD)
-        self._empty_evt = self._evt[:]
 
     def process(self, hid_results):
         self.add_keycode(hid_results.keycode)
@@ -161,7 +165,7 @@ class AbstractHID:
             # HIDReportTypes.CONSUMER: ConsumerReportData(),
             HIDReportTypes.MOUSE: MouseReportData()
         }
-
+        self.locked = False
         self.post_init()
 
     def __repr__(self):
@@ -188,10 +192,13 @@ class AbstractHID:
 
     def send(self):
         for type, report in self.reports.items():
-            for i, evt in enumerate(report.get_events()):
-                if i > 0:
-                    wait(30)
-                self.hid_send(type, evt)
+            if self.locked:
+                self.hid_send(type, report.get_empty_event())
+            else:
+                for i, evt in enumerate(report.get_events()):
+                    if i > 0:
+                        wait(30)
+                    self.hid_send(type, evt)
 
     def get_host_report(self):
         return None
@@ -269,7 +276,10 @@ class BLEHID(AbstractHID):
             ble.connections[0].pair()
 
         if hid_report_type in self.devices:
-            self.devices[hid_report_type].send_report(evt)
+            try:
+                self.devices[hid_report_type].send_report(evt)
+            except ConnectionError as e:
+                traceback.print_exception(e)
 
     def get_host_report(self):
         if self.host_report_device:

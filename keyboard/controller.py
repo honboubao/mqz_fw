@@ -1,4 +1,5 @@
 import board
+from digitalio import DigitalInOut, Direction, Pull
 
 from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
 from mqzfw.matrix import DiodeOrientation
@@ -14,6 +15,7 @@ def setup_keyboard(ble_mode, ble_name):
     row_pins = None
     diode_orientation = None
     status_led = None
+    lock_pin = None
 
     if board.board_id == 'itsybitsy_nrf52840_express':
         status_led = DotStarStatusLed(board.APA102_SCK, board.APA102_MOSI)
@@ -75,6 +77,10 @@ def setup_keyboard(ble_mode, ble_name):
         row_pins = (board.P0_09, board.P0_10, board.P1_11, board.P1_13)
         diode_orientation = DiodeOrientation.ROW2COL
 
+        lock_pin = DigitalInOut(board.P0_31)
+        lock_pin.direction = Direction.INPUT
+        lock_pin.pull = Pull.UP
+
     else:
         print("Unknown board. Exit.")
         print('pins:')
@@ -92,6 +98,11 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard.row_pins = row_pins
     keyboard.diode_orientation = diode_orientation
 
+    def base_on_tick():
+        if lock_pin is not None:
+            keyboard.set_lock(not lock_pin.value)
+        status_led.tick()
+
     if ble_mode:
         was_connected = keyboard.hid.ble.connected
         def on_tick():
@@ -103,14 +114,20 @@ def setup_keyboard(ble_mode, ble_name):
                     keyboard.hid.start_advertising()
                 status_led.set_status(LED_STATUS.BLE_CONNECTING)
             was_connected = keyboard.hid.ble.connected
-            status_led.tick()
+            base_on_tick()
 
         keyboard.on_tick = on_tick
     else:
-        def on_tick():
-            status_led.tick()
-
-        keyboard.on_tick = on_tick
+        keyboard.on_tick = base_on_tick
         status_led.set_status(LED_STATUS.USB_CONNECTED)
 
-    return keyboard, status_led
+    def deinit():
+        keyboard.deinit()
+        del keyboard
+        status_led.deinit()
+        del status_led
+        if lock_pin is not None:
+            lock_pin.deinit()
+            del lock_pin
+
+    return keyboard, deinit

@@ -164,3 +164,6 @@ class Keyboard:
     def lock_caps(self):
         if not self.is_caps_locked():
             self.tap_key(KC.CAPS)
+
+    def set_lock(self, locked):
+        self.hid.locked = locked

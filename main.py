@@ -23,7 +23,7 @@ last_exception = 0
 
 while i < 5:
     print("Setting up keyboard")
-    keyboard, status_led = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
+    keyboard, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
     setup_layout(keyboard)
 
     if __name__ != '__main__':
@@ -51,11 +51,7 @@ while i < 5:
         except Exception as log_e:
             traceback.print_exception(log_e)
 
-        keyboard.deinit()
-        status_led.deinit()
-        del keyboard
-        del status_led
-
+        deinit()
         gc.collect()
 
 
