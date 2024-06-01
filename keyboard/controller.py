@@ -33,6 +33,32 @@ def setup_keyboard(ble_mode, ble_name):
         diode_orientation = DiodeOrientation.COL2ROW
 
     elif board.board_id == 'nice_nano':
+        # board layout and pin names:
+        #               USB C
+        #           +---#####---+
+        #  TX/P0_06 |   #####   | P0_04/AIN2/BAT_VOLT (BAT IN)
+        #  RX/P0_08 |           | (GND)
+        #     (GND) | o         | (RST)
+        #     (GND) |           | P0_13/VCC_OFF (VCC 3.3V)
+        # SDA/P0_17 |   w       | P0_31/AIN7
+        # SCL/P0_20 | x         | P0_29/AIN5
+        #     P0_22 |           | P0_02/AIN0
+        #     P0_24 |           | P1_15
+        #     P1_00 | y z       | P1_13/SCK
+        #     P0_11 | a b c     | P1_11/MISO
+        #     P1_04 |           | P0_10/NFC2/MOSI
+        #     P1_06 +-----------+ P0_09/NFC1
+        #
+        # a: P1_01
+        # b: P1_02
+        # c: P1_07
+        # w: P0_26 (only on nice!nano v1.0)
+        # x: P0_12 (only on nice!nano v1.0)
+        # y: (SWD)
+        # z: (SWC)
+        # o: P0_15/LED
+        #
+        # additional singleton names: I2C (SCL/SDA), SPI (SCK/MOSI/MISO), UART (RX/TX)
         status_led = SimpleStatusLed(board.LED)
         col_pins = (
             board.P0_06,
