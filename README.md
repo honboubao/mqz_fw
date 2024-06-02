@@ -15,10 +15,6 @@ Download libraries from [https://circuitpython.org/libraries](https://circuitpyt
 
 adafruit_dotstar is only used when running on an Adafruit ItsyBitsy nRF52840 Express. The nice!nano only has an addressable single-color blue LED on the board.
 
-- uctypes
-
-[uctypes](https://docs.circuitpython.org/en/latest/docs/library/ctypes.html) is needed to put the microcontroller into deep sleep. uctypes is a standard Python library implemented in the core of CircuitPython. But as of CircuitPython 9.1.0 it is not bundled with any official builds. To be able to use this feature, you need to enable uctypes in the CircuitPython source code by adding `#define MICROPY_PY_UCTYPES 1` to the `mpconfigboard.h` file of your board and create a CircuitPython build yourself and flash this build onto your board via the UF2 bootloader.
-
 ## Tests
 
 To run unit tests in desktop environment: `python -m unittest`

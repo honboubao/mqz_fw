@@ -69,6 +69,7 @@ while i < 5:
 # ble explicitely enter pairing mode
 # use native keypad scanner
 # fix unit tests
+# volume/mute keys
 
 
 # Reset into UF2 bootloader: connect via serial port, start REPL with crtl+D, execute:

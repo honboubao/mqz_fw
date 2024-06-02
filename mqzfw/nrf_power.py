@@ -1,8 +1,5 @@
-try:
-    import uctypes
-except ImportError:
-    # uctypes not available in this CircuitPython build
-    pass
+import sys
+import memorymap
 
 # nRF52 Series > nRF52840 > nRF52840 Product Specification > Power and clock management > POWER — Power supply > Registers > SYSTEMOFF
 # https://infocenter.nordicsemi.com/index.jsp?topic=%2Fps_nrf52840%2Fpower.html&cp=5_0_0_4_2_2&anchor=register.SYSTEMOFF
@@ -17,9 +14,12 @@ pin_alarm_cnf = 0 # input buffer
 pin_alarm_cnf |= 3 << 2 # pull up
 pin_alarm_cnf |= 3 << 16 # sense low
 
-def set_uint32_at(addr, value):
-    register = uctypes.struct(addr, { "value": 0 | uctypes.UINT32 })
-    register.value = value
+
+def set_register_uint32(addr, value):
+    data = value.to_bytes(4, sys.byteorder)
+    register = memorymap.AddressRange(start=addr, length=4)
+    register[:] = data
+
 
 def get_pin_cnf_address(pin):
     pin_string = str(pin)
@@ -47,10 +47,6 @@ def get_pin_cnf_address(pin):
 def deep_sleep(alarm_pin):
     # see also:
     # nRF: deep sleep increases power usage https://github.com/adafruit/circuitpython/issues/5318
-    try:
-        if uctypes:
-            pin_cnf_addr = get_pin_cnf_address(alarm_pin)
-            set_uint32_at(pin_cnf_addr, pin_alarm_cnf)
-            set_uint32_at(system_off_addr, 1)
-    except NameError:
-        print('Cannot enter deep sleep. uctypes module is not available in this CircuitPython build.')
+    pin_cnf_addr = get_pin_cnf_address(alarm_pin)
+    set_register_uint32(pin_cnf_addr, pin_alarm_cnf)
+    set_register_uint32(system_off_addr, 1)
