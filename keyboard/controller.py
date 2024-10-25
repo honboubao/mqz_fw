@@ -137,23 +137,13 @@ def setup_keyboard(ble_mode, ble_name):
         status_led.set_status(LED_STATUS.USB_CONNECTED)
 
     def deinit():
-        del col_pins
-        del row_pins
-        del diode_orientation
-
         keyboard.deinit()
-        del keyboard
-
         status_led.deinit()
-        del status_led
 
         if lock_switch is not None:
             lock_switch.deinit()
-            del lock_switch
 
-        del power_pin
         if power_switch is not None:
             power_switch.deinit()
-            del power_switch
 
     return keyboard, deinit

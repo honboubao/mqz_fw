@@ -1,61 +1,75 @@
-print("Starting main.py")
+print('Starting main.py')
 
-import gc
-import traceback
 import supervisor
-import board
-from misc.time import now, time_diff
-from misc.switch import switch_pressed
 
-from keyboard.controller import setup_keyboard
-from keyboard.layout import setup_layout
+def write_log(lines):
+    time = str(supervisor.ticks_ms())
+    if running_on_board:
+        try:
+            with open('/log.txt', 'a') as log:
+                for line in lines:
+                    log.write(time + ': ' + line + '\n')
+        except Exception as e:
+            for line in lines:
+                print(time + ': ' + line)
+    else:
+        for line in lines:
+            print(time + ': ' + line)
 
-# TODO use nrf EVENTS_USBDETECTED register?
-ble_mode = True #not supervisor.runtime.usb_connected
+running_on_board = __name__ == '__main__'
 
-# upper right switch
-if board.board_id == 'itsybitsy_nrf52840_express':
-    ble_mode = not switch_pressed(board.D13, board.A0)
-elif board.board_id == 'nice_nano':
-    ble_mode = not switch_pressed(board.P0_09, board.P1_06)
+try:
+    write_log(['Booting up firmware.'])
 
-i = 0
-last_exception = 0
+    import gc
+    import traceback
+    import board
+    from misc.time import now, time_diff
+    from misc.switch import switch_pressed
 
-while i < 5:
-    print("Setting up keyboard")
-    keyboard, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
-    setup_layout(keyboard)
+    from keyboard.controller import setup_keyboard
+    from keyboard.layout import setup_layout
 
-    if __name__ != '__main__':
-        break
+    # TODO use nrf EVENTS_USBDETECTED register?
+    ble_mode = True #not supervisor.runtime.usb_connected
 
-    print("Started")
+    # upper right switch
+    if board.board_id == 'itsybitsy_nrf52840_express':
+        ble_mode = switch_pressed(board.D13, board.A0)
+    elif board.board_id == 'nice_nano':
+        ble_mode = switch_pressed(board.P0_09, board.P1_06)
 
-    try:
-        keyboard.go()
 
-        if i > 0 and time_diff(now(), last_exception) > 5000:
-            i = 0
+    last_exception = now()
 
-    except Exception as e:
-        last_exception = now()
-        i += 1
+    while True:
+        write_log(['Setting up keyboard'])
+        keyboard, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
+        setup_layout(keyboard)
 
-        traceback.print_exception(e)
+        if not running_on_board:
+            break
+
+        write_log(['Started'])
 
         try:
-            error = traceback.format_exception(e)
-            with open('/log.txt', 'a') as log:
-                for l in error:
-                    log.writelines(l)
-        except Exception as log_e:
-            traceback.print_exception(log_e)
+            keyboard.go()
+        except Exception as main_loop_exception:
+            write_log(['Error in main loop.'])
+            write_log(traceback.format_exception(main_loop_exception))
 
-        deinit()
-        del keyboard
-        del deinit
-        gc.collect()
+            deinit()
+            del keyboard
+            del deinit
+            gc.collect()
+        finally:
+            if time_diff(now(), last_exception) < 5000:
+                break
+            last_exception = now()
+
+except Exception as setup_teardown_exception:
+    write_log(['Error during setup or teardown.'])
+    write_log(traceback.format_exception(setup_teardown_exception))
 
 
 
@@ -70,7 +84,11 @@ while i < 5:
 # use native keypad scanner
 # fix unit tests
 # volume/mute keys
-
+# refactor with async/await
+# properly disconnect bluetooth on error
+# implement watchdog
+# fix double tap repeat on symbols layer
+# fix usb hid after wake from deep sleep
 
 # Reset into UF2 bootloader: connect via serial port, start REPL with crtl+D, execute:
 # import microcontroller
