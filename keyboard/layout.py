@@ -43,7 +43,7 @@ def setup_layout(keyboard):
     modtaps = [ # mod taps
             ____, ____, FN,   ____, ____, ____, ____, FN,   ____, ____,
             LSFT, SYM,  NUM,  ____, ____, LOCK, ____, NUM,  SYM,  RSFT,
-            LCTL, LWIN, LALT, ____, NUM,  ____, ____, RALT, RWIN, RCTL,
+            LCTL, LWIN, LALT, ____, NUM,  ____, ____, LALT, RWIN, RCTL,
             _,    _,    _,    ____, _,    ____, _,    _,    _,    _
         ]
 
@@ -52,25 +52,25 @@ def setup_layout(keyboard):
             Q,    W,    E,    R,    T,    Z,    U,    I,    O,    P,
             A,    S,    D,    F,    G,    H,    J,    K,    L,    Ö,
             Y,    X,    C,    V,    B,    N,    M,    Ü,    DTSS, Ä,
-            _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
+            _,    _,    _,    MNAV, _,    SPC,  _,    _,    _,    _
         ],
         [ # num
-            DEG,  SECT, SUP2, SUP3, ____, COLN, N7,   N8,   N9,   BKSP,
-            EURO, ACUT, MICR, SPC,  ____, COMM, N4,   N5,   N6,   ENT,
-            TILD, ____, ____, ____, ____, DOT,  N1,   N2,   N3,   MINS,
-            _,    _,    _,    MNAV, _,     N0,   _,    _,    _,    _
+            N1,   N2,   N3,   N4,   N5,   N6,   N7,   N8,   N9,   N0,
+            EURO, ACUT, DEG,  SECT, COLN, COMM, N4,   N5,   N6,   ENT,
+            TILD, SUP2, SUP3, MICR, MINS, DOT,  N1,   N2,   N3,   SPC,
+            _,    _,    _,    MNAV, _,    N0,   _,    _,    _,    _
         ],
         [ # sym
             CIRC, DLR,  HASH, PERC, AMPR, PIPE, LCBR, RCBR, LBRC, RBRC,
             AT,   GRV,  QUOT, DQUO, QUES, EXLM, LPRN, RPRN, LABK, RABK,
             BSLS, SLSH, ASTR, PLUS, MINS, EQL,  SCLN, COMM, COLN, UNDS,
-            _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
+            _,    _,    _,    MNAV, _,    SPC,  _,    _,    _,    _
         ],
         [ # fn
             ____, ____, ____, PSCR, SLCK, PAUS, F7,   F8,   F9,   F10,
             LSFT, ____, ____, ____, INS,  ____, F4,   F5,   F6,   F11,
-            LCTL, LWIN, LALT, ____, APP,  ____, F1,   F2,   F3,   F12,
-            _,    _,    _,    MNAV, _,     SPC,  _,    _,    _,    _
+            LCTL, LWIN, LALT, RALT, APP,  ____, F1,   F2,   F3,   F12,
+            _,    _,    _,    MNAV, _,    SPC,  _,    _,    _,    _
         ],
         [ # nav
             CTAB, HOME, UP,   END,  UNDO,  PGUP, HOME, UP,   END,  BSDL,
@@ -79,7 +79,7 @@ def setup_layout(keyboard):
             _,    _,    _,    MNAV, _,     TAB,  _,    _,    _,    _
         ],
         [ # lock
-            ____, ____, LFN,  ____, ____, ____, ____, ____, ____, ____,
+            ____, ____, LFN,  ____, ____, ____, ____, LFN,  ____, ____,
             CAPS, LSYM, LNUM, ____, ____, ____, ____, LNUM, LSYM, CAPS,
             ____, ____, ____, ____, LNUM, ____, ____, ____, ____, ____,
             _,    _,    _,    LNAV, _,    CLLK, _,    _,    _,    _
