@@ -3,7 +3,7 @@ from digitalio import DigitalInOut, Direction, Pull
 
 from mqzfw.status_led import LED_STATUS, SimpleStatusLed, DotStarStatusLed
 from mqzfw.matrix import DiodeOrientation
-from mqzfw.nrf_power import deep_sleep
+from mqzfw.nrf_power import deep_sleep, get_battery_percentage
 
 from mqzfw.hid import BLEHID, USBHID
 from mqzfw.keyboard import Keyboard
@@ -111,12 +111,20 @@ def setup_keyboard(ble_mode, ble_name):
     was_connected = keyboard.hid.is_connected()
 
     def on_tick():
+        battery_level = get_battery_percentage()
+        if ble_mode:
+            keyboard.hid.send_battery_level(battery_level)
+
         nonlocal was_connected
         is_connected = keyboard.hid.is_connected()
-        status_led.set_status(connected_led_status if is_connected else connecting_led_status)
         if ble_mode and not is_connected and was_connected:
             keyboard.hid.start_advertising()
         was_connected = is_connected
+
+        if battery_level < 10:
+            status_led.set_status(LED_STATUS.LOW_BATTERY)
+        else:
+            status_led.set_status(connected_led_status if is_connected else connecting_led_status)
 
         if lock_switch is not None:
             # switch position lock -> lock_switch.value = False / switch position unlock -> lock_switch.value = True

@@ -10,6 +10,8 @@ try:
     from adafruit_ble import BLERadio
     from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
     from adafruit_ble.services.standard.hid import HIDService
+    from adafruit_ble.services.standard import BatteryService
+
     ble = BLERadio()
     ble.stop_advertising()
 
@@ -17,8 +19,10 @@ try:
 
     ble_hid = HIDService()
     ble_hid.protocol_mode = 0  # Boot protocol
+    ble_battery = BatteryService()
     ble_advertisement = ProvideServicesAdvertisement(ble_hid)
     ble_advertisement.appearance = BLE_APPEARANCE_HID_KEYBOARD
+    ble_advertisement.services.append(ble_battery)
 except ImportError:
     # BLE not supported on this platform
     pass
@@ -327,3 +331,6 @@ class BLEHID(AbstractHID):
 
     def is_connected(self):
         return ble.connected
+
+    def send_battery_level(self, battery_level):
+        ble_battery.level = battery_level

@@ -4,8 +4,31 @@ import re
 from collections import namedtuple
 
 
+def get_battery_percentage():
+    return voltage_to_percentage(get_battery_voltage())
+
 def get_battery_voltage():
     return nrf_saadc_read_vddhdiv5_voltage()
+
+def voltage_to_percentage(voltage):
+    if voltage >= 4.2:
+        return 100
+    elif voltage > 4.0:
+        return 85 + (voltage - 4.0) * (100 - 85) / (4.2 - 4.0)
+    elif voltage > 3.9:
+        return 70 + (voltage - 3.9) * (85 - 70) / (4.0 - 3.9)
+    elif voltage > 3.8:
+        return 50 + (voltage - 3.8) * (70 - 50) / (3.9 - 3.8)
+    elif voltage > 3.7:
+        return 30 + (voltage - 3.7) * (50 - 30) / (3.8 - 3.7)
+    elif voltage > 3.5:
+        return 15 + (voltage - 3.5) * (30 - 15) / (3.7 - 3.5)
+    elif voltage > 3.2:
+        return 5 + (voltage - 3.2) * (15 - 5) / (3.5 - 3.2)
+    elif voltage > 3.0:
+        return (voltage - 3.0) * (5 - 0) / (3.2 - 3.0)
+    else:
+        return 0
 
 def set_address_uint32(addr, value):
     data = value.to_bytes(4, sys.byteorder)

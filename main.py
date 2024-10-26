@@ -79,7 +79,6 @@ except Exception as setup_teardown_exception:
 # ble powersaving
 # ble and usb
 # ble multiple connections
-# ble report battery level to host
 # ble buffer hid reports until connected then replay
 # ble explicitely enter pairing mode
 # use native keypad scanner
