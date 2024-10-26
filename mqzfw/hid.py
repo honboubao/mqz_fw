@@ -61,7 +61,6 @@ class HIDReportData:
 
     def get_events(self):
         if self._evt != self._prev_evt:
-            self._prev_evt[:] = self._evt
             return [self._evt]
         return []
 
@@ -72,6 +71,11 @@ class HIDReportData:
         for idx in range(0, self.size):
             self._evt[idx] = 0x00
 
+    def event_sent(self):
+        self._prev_evt[:] = self._evt
+
+    def empty_event_sent(self):
+        self._prev_evt[:] = self._empty_evt
 
 class KeyboardReportData(HIDReportData):
     # 8 bytes
@@ -118,10 +122,8 @@ class KeyboardReportData(HIDReportData):
                 mods_evt = self._empty_evt[:]
                 mods_evt[0] = self._prev_evt[0]
                 events.insert(0, mods_evt)
-            self._prev_evt[:] = self._evt
             return events
         return []
-
 
 # class ConsumerReportData(HIDReportData):
 #     def __init__(self):
@@ -194,16 +196,24 @@ class AbstractHID:
         for type, report in self.reports.items():
             if self.locked:
                 self.hid_send(type, report.get_empty_event())
+                report.empty_event_sent()
             else:
                 for i, evt in enumerate(report.get_events()):
                     if i > 0:
                         wait(30)
                     self.hid_send(type, evt)
+                report.event_sent()
 
     def get_host_report(self):
         return None
 
+    def is_connected(self):
+        return False
+
 class USBHID(AbstractHID):
+    def __init__(self):
+        super().__init__()
+        self.ready = False
 
     def post_init(self):
         self.devices = {}
@@ -219,15 +229,25 @@ class USBHID(AbstractHID):
             elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                 self.devices[HIDReportTypes.MOUSE] = device
 
+    def send(self):
+        try:
+            super().send()
+            self.ready = True
+        except OSError as e:
+            self.ready = False
+
     def hid_send(self, hid_report_type, evt):
         if hid_report_type in self.devices:
             self.devices[hid_report_type].send_report(evt)
+            self.ready = True
 
     def get_host_report(self):
         if HIDReportTypes.KEYBOARD in self.devices:
            return self.devices[HIDReportTypes.KEYBOARD].get_last_received_report()
         return None
 
+    def is_connected(self):
+        return self.ready
 
 class BLEHID(AbstractHID):
     def __init__(self, ble_name=str(getmount('/').label), **kwargs):
@@ -304,3 +324,6 @@ class BLEHID(AbstractHID):
 
     def stop_advertising(self):
         ble.stop_advertising()
+
+    def is_connected(self):
+        return ble.connected

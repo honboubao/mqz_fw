@@ -106,7 +106,18 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard.row_pins = row_pins
     keyboard.diode_orientation = diode_orientation
 
-    def base_on_tick():
+    connected_led_status = LED_STATUS.BLE_CONNECTED if ble_mode else LED_STATUS.USB_CONNECTED
+    connecting_led_status = LED_STATUS.BLE_CONNECTING if ble_mode else LED_STATUS.USB_CONNECTING
+    was_connected = keyboard.hid.is_connected()
+
+    def on_tick():
+        nonlocal was_connected
+        is_connected = keyboard.hid.is_connected()
+        status_led.set_status(connected_led_status if is_connected else connecting_led_status)
+        if ble_mode and not is_connected and was_connected:
+            keyboard.hid.start_advertising()
+        was_connected = is_connected
+
         if lock_switch is not None:
             # switch position lock -> lock_switch.value = False / switch position unlock -> lock_switch.value = True
             keyboard.set_lock(not lock_switch.value)
@@ -118,23 +129,7 @@ def setup_keyboard(ble_mode, ble_name):
 
         status_led.tick()
 
-    if ble_mode:
-        was_connected = keyboard.hid.ble.connected
-        def on_tick():
-            nonlocal was_connected
-            if keyboard.hid.ble.connected:
-                status_led.set_status(LED_STATUS.BLE_CONNECTED)
-            else:
-                if was_connected:
-                    keyboard.hid.start_advertising()
-                status_led.set_status(LED_STATUS.BLE_CONNECTING)
-            was_connected = keyboard.hid.ble.connected
-            base_on_tick()
-
-        keyboard.on_tick = on_tick
-    else:
-        keyboard.on_tick = base_on_tick
-        status_led.set_status(LED_STATUS.USB_CONNECTED)
+    keyboard.on_tick = on_tick
 
     def deinit():
         keyboard.deinit()

@@ -3,10 +3,11 @@ from misc.time import now, time_diff, time_add
 
 class LED_STATUS:
     STARTUP = 0
-    USB_CONNECTED = 1
-    BLE_CONNECTING = 2
-    BLE_CONNECTED = 3
-    LOW_BATTERY = 4
+    USB_CONNECTING = 1
+    USB_CONNECTED = 2
+    BLE_CONNECTING = 3
+    BLE_CONNECTED = 4
+    LOW_BATTERY = 5
 
 
 class StatusLed:
@@ -109,6 +110,8 @@ class SimpleStatusLed(StatusLed):
 
         if status == LED_STATUS.STARTUP:
             self.set_color((1, 1, 1, .5))
+        elif status == LED_STATUS.USB_CONNECTING:
+            self.set_animation([[0, (1, 1, 1, .05)], [.5, (0, 0, 0, 0)]], 2)
         elif status == LED_STATUS.USB_CONNECTED:
             self.set_color((1, 1, 1, .01))
         elif status == LED_STATUS.BLE_CONNECTING:

@@ -35,9 +35,9 @@ try:
 
     # upper right switch
     if board.board_id == 'itsybitsy_nrf52840_express':
-        ble_mode = switch_pressed(board.D13, board.A0)
+        ble_mode = not switch_pressed(board.D13, board.A0)
     elif board.board_id == 'nice_nano':
-        ble_mode = switch_pressed(board.P0_09, board.P1_06)
+        ble_mode = not switch_pressed(board.P0_09, board.P1_06)
 
 
     last_exception = now()
@@ -64,6 +64,7 @@ try:
             gc.collect()
         finally:
             if time_diff(now(), last_exception) < 5000:
+                write_log(['Too many errors within 5s, end firmware execution.'])
                 break
             last_exception = now()
 
@@ -88,7 +89,7 @@ except Exception as setup_teardown_exception:
 # properly disconnect bluetooth on error
 # implement watchdog
 # fix double tap repeat on symbols layer
-# fix usb hid after wake from deep sleep
+# proper logging
 
 # Reset into UF2 bootloader: connect via serial port, start REPL with crtl+D, execute:
 # import microcontroller
