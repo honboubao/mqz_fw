@@ -14,7 +14,7 @@ class Keyboard:
     col_pins = None
     diode_orientation = None
     hid = None
-    tapping_term = 300
+    tapping_term = 400
 
     before_resolved = None
     on_layer_changed = None
@@ -23,12 +23,13 @@ class Keyboard:
     # state
     unresolved_key_events = []
     resolved_key_events = []
-    
+
+    _matrix = None
     _mods_active = set()
     _active_layers = [0]
 
     _hid_host_report_mods = 0x00
-    
+
     def go(self):
         self._init()
         while True:
@@ -49,7 +50,8 @@ class Keyboard:
         )
 
     def deinit(self):
-        self._matrix.deinit()
+        if self._matrix is not None:
+            self._matrix.deinit()
 
     # prev_hid_string = ''
 
