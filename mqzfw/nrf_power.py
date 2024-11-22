@@ -2,13 +2,26 @@ import sys
 import memorymap
 import re
 from collections import namedtuple
+from array import array
+
+battery_readings_size = 10
+battery_readings_pointer = 0
+battery_readings = array('d')
 
 
 def get_battery_percentage():
-    return voltage_to_percentage(get_battery_voltage())
+    return round(voltage_to_percentage(get_battery_voltage()))
 
 def get_battery_voltage():
-    return nrf_saadc_read_vddhdiv5_voltage()
+    global battery_readings
+    global battery_readings_pointer
+    voltage = nrf_saadc_read_vddhdiv5_voltage()
+    if battery_readings_pointer >= len(battery_readings):
+        battery_readings.append(voltage)
+    else:
+        battery_readings[battery_readings_pointer] = voltage
+    battery_readings_pointer = (battery_readings_pointer + 1) % battery_readings_size
+    return sum(battery_readings) / len(battery_readings)
 
 def voltage_to_percentage(voltage):
     if voltage >= 4.2:

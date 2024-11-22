@@ -333,4 +333,6 @@ class BLEHID(AbstractHID):
         return ble.connected
 
     def send_battery_level(self, battery_level):
+        if not ble.connected:
+            return
         ble_battery.level = battery_level
