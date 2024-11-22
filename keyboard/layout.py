@@ -55,10 +55,10 @@ def setup_layout(keyboard):
             _,    _,    _,    MNAV, _,    SPC,  _,    _,    _,    _
         ],
         [ # num
-            N1,   N2,   N3,   N4,   N5,   N6,   N7,   N8,   N9,   N0,
+            N1,   N2,   N3,   N4,   N5,   N6,   N7,   N8,   N9,   BSDL,
             EURO, ACUT, DEG,  SECT, COLN, COMM, N4,   N5,   N6,   ENT,
-            TILD, SUP2, SUP3, MICR, MINS, DOT,  N1,   N2,   N3,   SPC,
-            _,    _,    _,    MNAV, _,    N0,   _,    _,    _,    _
+            TILD, SUP2, SUP3, MICR, MINS, DOT,  N1,   N2,   N3,   N0,
+            _,    _,    _,    MNAV, _,    SPC,   _,    _,    _,    _
         ],
         [ # sym
             CIRC, DLR,  HASH, PERC, AMPR, PIPE, LCBR, RCBR, LBRC, RBRC,
