@@ -75,7 +75,6 @@ except Exception as setup_teardown_exception:
 
 
 # TODO
-# (ZMK hold tap flavors)
 # ble powersaving
 # ble and usb
 # ble multiple connections

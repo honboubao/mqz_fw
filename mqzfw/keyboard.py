@@ -14,7 +14,7 @@ class Keyboard:
     col_pins = None
     diode_orientation = None
     hid = None
-    tapping_term = 400
+    tapping_term = 300
 
     before_resolved = None
     on_layer_changed = None

@@ -119,24 +119,29 @@ class MouseKey(Key):
         super().__init__(HIDReportTypes.MOUSE, button)
 
 
+class HoldTapFlavor:
+    BALANCED = 1
+    TAP_PREFERRED = 2
+
 class HoldTapKey(Key):
-    def __init__(self, tapping_term=None):
+    def __init__(self, flavor=HoldTapFlavor.BALANCED, tapping_term=None):
         super().__init__(None, None, 0, 0)
+        self.flavor = flavor
         self.tapping_term = tapping_term
         self.previous_tap_time = None
 
     def resolve(self, key_event, keyboard):
-        # balanced flavour:
-        #   key is resolved if 
-        #     1) another key is pressed and released within tapping
-        #        term and before this key is released (resolves to hold)
-        #     2) key is released within tapping term (resolves to tap)
-        #     3) tapping term expires
-        #        3a) resolve to tap for tap-tap-hold action
-        #        3b) resolve to hold
+        # key is resolved if
+        #   1) balanced flavor only:
+        #      another key is pressed and released within tapping
+        #      term and before this key is released (resolves to hold)
+        #   2) key is released within tapping term (resolves to tap)
+        #   3) tapping term expires
+        #      3a) resolve to tap for tap-tap-hold action
+        #      3b) resolve to hold
         if key_event.pressed:
             # 1)
-            if self._is_other_key_tapped_within_tapping_term(key_event, keyboard):
+            if self.flavor == HoldTapFlavor.BALANCED and self._is_other_key_tapped_within_tapping_term(key_event, keyboard):
                 self.previous_tap_time = None
                 return self._resolve_hold(key_event, keyboard)
             # 2)
@@ -195,8 +200,8 @@ class HoldTapKey(Key):
 
 
 class ModTapKey(HoldTapKey):
-    def __init__(self, mod_key, tap_key, tapping_term=None):
-        super().__init__(tapping_term)
+    def __init__(self, mod_key, tap_key, flavor=HoldTapFlavor.BALANCED, tapping_term=None):
+        super().__init__(flavor, tapping_term)
         self.mod_key = mod_key
         self.tap_key = tap_key
         self.resolved_key = None
@@ -228,8 +233,8 @@ class ModTapKey(HoldTapKey):
         return self.resolved_key == key
 
 class LayerTapKey(HoldTapKey):
-    def __init__(self, layer, tap_key, tapping_term=None):
-        super().__init__(tapping_term)
+    def __init__(self, layer, tap_key, flavor=HoldTapFlavor.BALANCED, tapping_term=None):
+        super().__init__(flavor, tapping_term)
         self.layer = layer
         self.tap_key = tap_key
         self.resolved_to = None

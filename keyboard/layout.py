@@ -1,5 +1,5 @@
 from mqzfw.keycodes import *
-from mqzfw.keys import Key, KeyboardKey
+from mqzfw.keys import HoldTapFlavor, Key, KeyboardKey
 
 def setup_layout(keyboard):
     _ = XXXX
@@ -27,27 +27,36 @@ def setup_layout(keyboard):
     ACTMOD = KeyboardKey(None)
 
 
-    def transform_modkey(key, mod, layer):
+    def transform_modkey(key, mod, layer, flavor):
         if key in (LSFT, LCTL, LWIN, LALT):
             return key
 
         if isinstance(mod, Key) and mod.mods > 0:
-            return MT(mod, key)
+            return MT(mod, key, flavor)
         if isinstance(mod, int) and (mod == LOCK or layer == 0):
-            return LT(mod, key)
+            return LT(mod, key, flavor)
         return key
 
-    def apply_modtaps(keymap, layer):
-        return [transform_modkey(key, mod, layer) for key, mod in zip(keymap, modtaps)]
+    def apply_modtaps(keys, layer):
+        modtap_applied = [transform_modkey(key, mod, layer, HoldTapFlavor.BALANCED) for key, mod in zip(keys, modtaps_balanced)]
+        modtap_applied = [transform_modkey(key, mod, layer, HoldTapFlavor.TAP_PREFERRED) for key, mod in zip(modtap_applied, modtaps_tap_preferred)]
+        return modtap_applied
 
-    modtaps = [ # mod taps
+    modtaps_balanced = [
+            ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+            LSFT, SYM,  NUM,  ____, ____, ____, ____, NUM,  SYM,  RSFT,
+            ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+            _,    _,    _,    ____, _,    ____, _,    _,    _,    _
+        ]
+
+    modtaps_tap_preferred = [
             ____, ____, FN,   ____, ____, ____, ____, FN,   ____, ____,
-            LSFT, SYM,  NUM,  ____, ____, LOCK, ____, NUM,  SYM,  RSFT,
+            ____, ____, ____, ____, ____, LOCK, ____, ____, ____, ____,
             LCTL, LWIN, LALT, ____, NUM,  ____, ____, LALT, RWIN, RCTL,
             _,    _,    _,    ____, _,    ____, _,    _,    _,    _
         ]
 
-    keymap = [apply_modtaps(keymap, layer) for layer, keymap in enumerate([
+    keymap = [apply_modtaps(keys, layer) for layer, keys in enumerate([
         [ # base
             Q,    W,    E,    R,    T,    Z,    U,    I,    O,    P,
             A,    S,    D,    F,    G,    H,    J,    K,    L,    Ö,

@@ -99,7 +99,6 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard = Keyboard()
 
     keyboard.hid = BLEHID(ble_name=ble_name) if ble_mode else USBHID()
-    keyboard.tapping_term = 200
     keyboard.debug_enabled = False
 
     keyboard.col_pins = col_pins
