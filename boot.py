@@ -6,6 +6,8 @@ from misc.switch import switch_pressed
 
 # supervisor.set_next_stack_limit(4096 + 4096)
 
+supervisor.runtime.ble_workflow = True
+
 debug = True
 
 # upper left switch
