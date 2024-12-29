@@ -35,9 +35,9 @@ class Keyboard:
         while True:
             self._main_loop()
 
-    def _log(self, message):
+    def _log(self, message, *args):
         if self.debug_enabled:
-            print(message)
+            print(message.format(*args))
 
     def _init(self):
         if self.hid is None:
@@ -71,7 +71,7 @@ class Keyboard:
         matrix_update = self._matrix.scan_for_changes()
         if matrix_update:
             self._log('\n################################################')
-            self._log('MatrixChange(ic={} pressed={})'.format(matrix_update.int_coord, matrix_update.pressed))
+            self._log('MatrixChange(ic={} pressed={})', matrix_update.int_coord, matrix_update.pressed)
             self.unresolved_key_events.append(matrix_update)
 
         if self.unresolved_key_events:
@@ -82,7 +82,7 @@ class Keyboard:
                     self.before_resolved(e)
                 self.resolved_key_events.append(e)
                 self.unresolved_key_events.remove(e)
-                self._log('ResolvedKeyEvents({})'.format(self.resolved_key_events))
+                self._log('ResolvedKeyEvents({})', self.resolved_key_events)
             self.resolved_key_events = [e for e in self.resolved_key_events if not e.to_be_removed]
 
         self._send_hid()
@@ -99,7 +99,7 @@ class Keyboard:
         except IndexError:
             layer_key = None
             self._log(f'KeymapIndexError(int_coord={int_coord}, layer={layer})')
-        self._log('KeyResolution(key={}, layer={})'.format(layer_key, layer))
+        self._log('KeyResolution(key={}, layer={})', layer_key, layer)
 
         return layer_key
 
