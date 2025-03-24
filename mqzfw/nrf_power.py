@@ -4,24 +4,29 @@ import re
 from collections import namedtuple
 from array import array
 
-battery_readings_size = 10
-battery_readings_pointer = 0
-battery_readings = array('d')
-
+battery_percentage = None
+battery_voltage = None
+smoothing_factor = 0.01
 
 def get_battery_percentage():
-    return round(voltage_to_percentage(get_battery_voltage()))
+    global battery_percentage
+    percentage = round(voltage_to_percentage(get_battery_voltage()))
+    if percentage == 100 or battery_percentage is None:
+        battery_percentage = percentage
+    else:
+        # monotonic constraint: battery charge can only ever decrease. While charging, it shows 100% instead of increasing slowly
+        battery_percentage = min(battery_percentage, percentage)
+    return battery_percentage
 
 def get_battery_voltage():
-    global battery_readings
-    global battery_readings_pointer
+    global battery_voltage
     voltage = nrf_saadc_read_vddhdiv5_voltage()
-    if battery_readings_pointer >= len(battery_readings):
-        battery_readings.append(voltage)
+    if battery_voltage is None:
+        battery_voltage = voltage
     else:
-        battery_readings[battery_readings_pointer] = voltage
-    battery_readings_pointer = (battery_readings_pointer + 1) % battery_readings_size
-    return sum(battery_readings) / len(battery_readings)
+        # exponential moving average
+        battery_voltage = smoothing_factor * voltage + (1 - smoothing_factor) * battery_voltage
+    return battery_voltage
 
 def voltage_to_percentage(voltage):
     if voltage >= 4.2:

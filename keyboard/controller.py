@@ -120,10 +120,12 @@ def setup_keyboard(ble_mode, ble_name):
             keyboard.hid.start_advertising()
         was_connected = is_connected
 
-        if battery_level < 10:
+        if not is_connected:
+            status_led.set_status(connecting_led_status)
+        elif battery_level < 10:
             status_led.set_status(LED_STATUS.LOW_BATTERY)
         else:
-            status_led.set_status(connected_led_status if is_connected else connecting_led_status)
+            status_led.set_status(connected_led_status)
 
         if lock_switch is not None:
             # switch position unlock (pin disconnected from ground) -> lock_switch.value = True
