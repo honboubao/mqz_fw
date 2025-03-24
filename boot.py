@@ -13,9 +13,10 @@ debug = True
 # upper left switch
 if board.board_id == 'itsybitsy_nrf52840_express':
     debug = switch_pressed(board.D2, board.A0)
-elif board.board_id == 'nice_nano':
+elif board.board_id == 'nice_nano' or board.board_id == 'supermini_nrf52840':
     debug = switch_pressed(board.P0_09, board.P0_06)
 
+debug = True
 if not debug:
     # mount for writing
     storage.remount("/", False)

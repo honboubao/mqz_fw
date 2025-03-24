@@ -36,7 +36,7 @@ try:
     # upper right switch
     if board.board_id == 'itsybitsy_nrf52840_express':
         ble_mode = not switch_pressed(board.D13, board.A0)
-    elif board.board_id == 'nice_nano':
+    elif board.board_id == 'nice_nano' or board.board_id == 'supermini_nrf52840':
         ble_mode = not switch_pressed(board.P0_09, board.P1_06)
 
 

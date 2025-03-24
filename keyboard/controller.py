@@ -37,7 +37,7 @@ def setup_keyboard(ble_mode, ble_name):
         row_pins = (board.A0, board.A1, board.A2, board.A3)
         diode_orientation = DiodeOrientation.COL2ROW
 
-    elif board.board_id == 'nice_nano':
+    elif board.board_id == 'nice_nano' or board.board_id == 'supermini_nrf52840':
         # board layout and pin names:
         #               USB C
         #           +---#####---+
@@ -126,11 +126,13 @@ def setup_keyboard(ble_mode, ble_name):
             status_led.set_status(connected_led_status if is_connected else connecting_led_status)
 
         if lock_switch is not None:
-            # switch position lock -> lock_switch.value = False / switch position unlock -> lock_switch.value = True
+            # switch position unlock (pin disconnected from ground) -> lock_switch.value = True
+            # switch position lock (pin connected to ground) -> lock_switch.value = False
             keyboard.set_lock(not lock_switch.value)
 
         if power_switch is not None and power_pin is not None:
-            # switch position off -> power_switch.value = True / switch position off -> lock_switch.value = False
+            # switch position off (pin disconnected from ground) -> power_switch.value = True
+            # switch position on (pin connected to ground) -> power_switch.value = False
             if power_switch.value:
                 deep_sleep(power_pin)
 
