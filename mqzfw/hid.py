@@ -1,10 +1,11 @@
+from asyncio import sleep
 import traceback
 import time
 import usb_hid
 from micropython import const
 
 from storage import getmount
-from misc.time import now, time_diff, wait
+from misc.time import now, time_diff
 
 try:
     from adafruit_ble import BLERadio
@@ -189,25 +190,25 @@ class AbstractHID:
             if kevent.hid_results is not None and kevent.hid_results.hid_type in self.reports:
                 self.reports[kevent.hid_results.hid_type].process(kevent.hid_results)
 
-    def hid_send(self, hid_report_type, evt):
+    async def hid_send(self, hid_report_type, evt):
         pass
 
-    def hid_send_delay(self, hid_report_type):
+    async def hid_send_delay(self, hid_report_type):
         if hid_report_type in self.previous_send_time:
             ticks_since_prev_send = time_diff(now(), self.previous_send_time[hid_report_type])
             wait_ticks = 50 - ticks_since_prev_send
             if wait_ticks > 0:
-                wait(wait_ticks)
+                await sleep(wait_ticks / 1000)
         self.previous_send_time[hid_report_type] = now()
 
-    def send(self):
+    async def send(self):
         for type, report in self.reports.items():
             if self.locked:
-                self.hid_send(type, report.get_empty_event())
+                await self.hid_send(type, report.get_empty_event())
                 report.empty_event_sent()
             else:
                 for evt in report.get_events():
-                    self.hid_send(type, evt)
+                    await self.hid_send(type, evt)
                 report.event_sent()
 
     def get_host_report(self):
@@ -235,16 +236,16 @@ class USBHID(AbstractHID):
             elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                 self.devices[HIDReportTypes.MOUSE] = device
 
-    def send(self):
+    async def send(self):
         try:
-            super().send()
+            await super().send()
             self.ready = True
         except OSError as e:
             self.ready = False
 
-    def hid_send(self, hid_report_type, evt):
+    async def hid_send(self, hid_report_type, evt):
         if hid_report_type in self.devices:
-            self.hid_send_delay(hid_report_type)
+            await self.hid_send_delay(hid_report_type)
             self.devices[hid_report_type].send_report(evt)
             self.ready = True
 
@@ -288,7 +289,7 @@ class BLEHID(AbstractHID):
 
         self.start_advertising()
 
-    def hid_send(self, hid_report_type, evt):
+    async def hid_send(self, hid_report_type, evt):
         if not ble.connected:
             return
 
@@ -303,7 +304,7 @@ class BLEHID(AbstractHID):
             ble.connections[0].pair()
 
         if hid_report_type in self.devices:
-            self.hid_send_delay(hid_report_type)
+            await self.hid_send_delay(hid_report_type)
             try:
                 self.devices[hid_report_type].send_report(evt)
             except ConnectionError as e:

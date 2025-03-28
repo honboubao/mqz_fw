@@ -25,8 +25,3 @@ def is_before(ticks1, ticks2):
 def is_same_or_before(ticks1, ticks2):
     "Return true iff ticks1 is less than or equal to ticks2, assuming that they are within 2**28 ticks"
     return time_diff(ticks1, ticks2) <= 0
-
-def wait(ticks):
-    mark = now()
-    while time_diff(now(), mark) < ticks:
-        pass

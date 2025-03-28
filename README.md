@@ -10,6 +10,8 @@ It is tailored towards the Nordic nRF52840 SoC on a [nice!nano v2.0](https://nic
 
 - adafruit_ble
 - adafruit_dotstar
+- asyncio
+- adafruit_ticks
 
 Download libraries from [https://circuitpython.org/libraries](https://circuitpython.org/libraries) for the appropriate CircuitPython version of your board (see boot_out.txt on your board) and copy the libraries to the lib folder on your board.
 

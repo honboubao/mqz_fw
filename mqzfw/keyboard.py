@@ -1,3 +1,4 @@
+from asyncio import sleep
 from mqzfw.hid import USBHID
 from mqzfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
 from mqzfw.matrix import MatrixScanner
@@ -30,10 +31,11 @@ class Keyboard:
 
     _hid_host_report_mods = 0x00
 
-    def go(self):
+    async def run(self):
         self._init()
         while True:
-            self._main_loop()
+            await self._main_loop()
+            await sleep(0)
 
     def _log(self, message, *args):
         if self.debug_enabled:
@@ -55,7 +57,7 @@ class Keyboard:
 
     # prev_hid_string = ''
 
-    def _main_loop(self):
+    async def _main_loop(self):
         # hid_string = self.hid.__repr__()
         # if self.prev_hid_string != hid_string:
         #     print(hid_string)
@@ -85,11 +87,11 @@ class Keyboard:
                 self._log('ResolvedKeyEvents({})', self.resolved_key_events)
             self.resolved_key_events = [e for e in self.resolved_key_events if not e.to_be_removed]
 
-        self._send_hid()
+        await self._send_hid()
 
-    def _send_hid(self): 
+    async def _send_hid(self):
         self.hid.create_report(self.resolved_key_events)
-        self.hid.send()
+        await self.hid.send()
 
 
     def get_keymap_key(self, int_coord):
@@ -145,19 +147,19 @@ class Keyboard:
     def is_key_pressed(self, key):
         return bool(find(self.resolved_key_events, lambda i: i.key == key))
 
-    def press_key(self, key):
+    async def press_key(self, key):
         key_event = KeyEvent.virtual(self, key, True)
         self.resolved_key_events.append(key_event)
-        self._send_hid()
+        await self._send_hid()
 
-    def release_key(self, key):
+    async def release_key(self, key):
         key_event = KeyEvent.virtual(self, key, False)
         self.resolved_key_events.append(key_event)
-        self._send_hid()
+        await self._send_hid()
 
-    def tap_key(self, key):
-        self.press_key(key)
-        self.release_key(key)
+    async def tap_key(self, key):
+        await self.press_key(key)
+        await self.release_key(key)
 
     def unlock_caps(self):
         if self.is_caps_locked():

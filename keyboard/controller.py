@@ -138,8 +138,6 @@ def setup_keyboard(ble_mode, ble_name):
             if power_switch.value:
                 deep_sleep(power_pin)
 
-        status_led.tick()
-
     keyboard.on_tick = on_tick
 
     def deinit():
@@ -152,4 +150,4 @@ def setup_keyboard(ble_mode, ble_name):
         if power_switch is not None:
             power_switch.deinit()
 
-    return keyboard, deinit
+    return keyboard, status_led, deinit

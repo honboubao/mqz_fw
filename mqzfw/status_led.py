@@ -1,3 +1,4 @@
+from asyncio import sleep
 from misc.time import now, time_diff, time_add
 
 
@@ -14,6 +15,8 @@ class StatusLed:
 
     def __init__(self):
         self.status = None
+        self.color = None
+        self.keyframes = None
 
     def deinit(self):
         pass
@@ -45,22 +48,23 @@ class StatusLed:
             self.keyframes.append([1] + keyframes[0][1:])
         self.period_length = int(1000 / frequency)
         self.period_start = now()
-        self.tick()
 
-    def tick(self):
-        if self.color is not None:
-            return
+    async def run(self):
+        while True:
+            if self.color is not None:
+                continue
 
-        if self.keyframes is None:
-            return
+            if self.keyframes is None:
+                continue
 
-        period_progression = time_diff(now(), self.period_start) / self.period_length
-        if period_progression >= 1:
-            period_progression = period_progression - int(period_progression)
-            self.period_start = time_add(self.period_start, self.period_length)
+            period_progression = time_diff(now(), self.period_start) / self.period_length
+            if period_progression >= 1:
+                period_progression = period_progression - int(period_progression)
+                self.period_start = time_add(self.period_start, self.period_length)
 
-        color = self.interpolate_color(period_progression)
-        self.set_led(color)
+            color = self.interpolate_color(period_progression)
+            self.set_led(color)
+            await sleep(0)
 
     def interpolate_color(self, tick):
 

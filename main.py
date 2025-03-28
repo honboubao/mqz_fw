@@ -2,6 +2,8 @@ print('Starting main.py')
 
 import supervisor
 
+running_on_board = __name__ == '__main__'
+
 def write_log(lines):
     time = str(supervisor.ticks_ms())
     if running_on_board:
@@ -16,11 +18,11 @@ def write_log(lines):
         for line in lines:
             print(time + ': ' + line)
 
-running_on_board = __name__ == '__main__'
 
 try:
     write_log(['Booting up firmware.'])
 
+    import asyncio
     import gc
     import traceback
     import board
@@ -40,33 +42,38 @@ try:
         ble_mode = not switch_pressed(board.P0_09, board.P1_06)
 
 
-    last_exception = now()
+    async def main():
+        last_exception = now()
 
-    while True:
-        write_log(['Setting up keyboard'])
-        keyboard, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
-        setup_layout(keyboard)
+        while True:
+            write_log(['Setting up keyboard'])
+            keyboard, status_led, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
+            setup_layout(keyboard)
 
-        if not running_on_board:
-            break
-
-        write_log(['Started'])
-
-        try:
-            keyboard.go()
-        except Exception as main_loop_exception:
-            write_log(['Error in main loop.'])
-            write_log(traceback.format_exception(main_loop_exception))
-
-            deinit()
-            del keyboard
-            del deinit
-            gc.collect()
-        finally:
-            if time_diff(now(), last_exception) < 5000:
-                write_log(['Too many errors within 5s, end firmware execution.'])
+            if not running_on_board:
                 break
-            last_exception = now()
+
+            write_log(['Started'])
+
+            try:
+                keyboard_task = asyncio.create_task(keyboard.run())
+                status_led_task = asyncio.create_task(status_led.run())
+                await asyncio.gather(keyboard_task, status_led_task)
+            except Exception as main_loop_exception:
+                write_log(['Error in main loop.'])
+                write_log(traceback.format_exception(main_loop_exception))
+
+                deinit()
+                del keyboard
+                del deinit
+                gc.collect()
+            finally:
+                if time_diff(now(), last_exception) < 5000:
+                    write_log(['Too many errors within 5s, end firmware execution.'])
+                    break
+                last_exception = now()
+
+    asyncio.run(main())
 
 except Exception as setup_teardown_exception:
     write_log(['Error during setup or teardown.'])
@@ -83,7 +90,6 @@ except Exception as setup_teardown_exception:
 # use native keypad scanner
 # fix unit tests
 # volume/mute keys
-# refactor with async/await
 # properly disconnect bluetooth on error
 # implement watchdog
 # fix double tap repeat on symbols layer
