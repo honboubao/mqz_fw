@@ -93,3 +93,7 @@ except Exception as setup_teardown_exception:
 # import microcontroller
 # microcontroller.on_next_reset(microcontroller.RunMode.UF2)
 # microcontroller.reset()
+
+# Reset flash storage:
+# import storage
+# storage.erase_filesystem()
