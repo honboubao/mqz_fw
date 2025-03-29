@@ -108,8 +108,6 @@ def setup_keyboard(ble_mode, ble_name):
         diode_orientation=diode_orientation
     )
 
-    connected_led_status = LED_STATUS.BLE_CONNECTED if ble_mode else LED_STATUS.USB_CONNECTED
-    connecting_led_status = LED_STATUS.BLE_CONNECTING if ble_mode else LED_STATUS.USB_CONNECTING
     was_connected = keyboard.hid.is_connected()
 
     def on_tick():
@@ -122,13 +120,6 @@ def setup_keyboard(ble_mode, ble_name):
         if ble_mode and not is_connected and was_connected:
             keyboard.hid.start_advertising()
         was_connected = is_connected
-
-        if not is_connected:
-            status_led.set_status(connecting_led_status)
-        elif battery_level < 10:
-            status_led.set_status(LED_STATUS.LOW_BATTERY)
-        else:
-            status_led.set_status(connected_led_status)
 
         if lock_switch is not None:
             # switch position unlock (pin disconnected from ground) -> lock_switch.value = True

@@ -1,6 +1,6 @@
 from asyncio import sleep
 from misc.time import now, time_diff, time_add
-
+from mqzfw.nrf_power import get_battery_percentage
 
 class LED_STATUS:
     STARTUP = 0
@@ -49,22 +49,31 @@ class StatusLed:
         self.period_length = int(1000 / frequency)
         self.period_start = now()
 
-    async def run(self):
+    async def run(self, hid, ble_mode):
+        connected_led_status = LED_STATUS.BLE_CONNECTED if ble_mode else LED_STATUS.USB_CONNECTED
+        connecting_led_status = LED_STATUS.BLE_CONNECTING if ble_mode else LED_STATUS.USB_CONNECTING
+
         while True:
-            if self.color is not None:
-                continue
+            if not hid.is_connected():
+                self.set_status(connecting_led_status)
+            elif get_battery_percentage() < 10:
+                self.set_status(LED_STATUS.LOW_BATTERY)
+            else:
+                self.set_status(connected_led_status)
 
-            if self.keyframes is None:
-                continue
+            self.animation_tick()
+            await sleep(0.03)
 
-            period_progression = time_diff(now(), self.period_start) / self.period_length
-            if period_progression >= 1:
-                period_progression = period_progression - int(period_progression)
-                self.period_start = time_add(self.period_start, self.period_length)
+    def animation_tick(self):
+        if self.color is not None or self.keyframes is None:
+            return
+        period_progression = time_diff(now(), self.period_start) / self.period_length
+        if period_progression >= 1:
+            period_progression = period_progression - int(period_progression)
+            self.period_start = time_add(self.period_start, self.period_length)
 
-            color = self.interpolate_color(period_progression)
-            self.set_led(color)
-            await sleep(0)
+        color = self.interpolate_color(period_progression)
+        self.set_led(color)
 
     def interpolate_color(self, tick):
 
