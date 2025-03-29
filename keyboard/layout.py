@@ -96,7 +96,7 @@ def setup_layout(keyboard):
     ])]
 
 
-    def before_resolved(key_event):
+    async def before_resolved(key_event):
         if key_event.pressed and (key_event.is_key(ATAB) or key_event.is_key(CTAB)):
             if not keyboard.is_key_pressed(ACTMOD) and keyboard.is_key_pressed(MNAV):
                 if key_event.is_key(ATAB):
@@ -105,27 +105,27 @@ def setup_layout(keyboard):
                 else:
                     ACTMOD.mods = KC_LCTL
                     ATAB.mods = KC_LSFT
-                keyboard.press_key(ACTMOD)
+                await keyboard.press_key(ACTMOD)
 
         if not key_event.pressed and key_event.key == MNAV:
             if keyboard.is_key_pressed(ACTMOD):
                 ATAB.mods = 0
                 CTAB.mods = 0
-                keyboard.release_key(ACTMOD)
+                await keyboard.release_key(ACTMOD)
 
 
     was_caps_locked = False
 
-    def on_layer_changed(layer, prev_layer):
+    async def on_layer_changed(layer, prev_layer):
         nonlocal was_caps_locked
         if layer not in (BASE, LOCK):
             if keyboard.is_caps_locked():
                 was_caps_locked = True
-                keyboard.unlock_caps()
+                await keyboard.unlock_caps()
         else:
             if was_caps_locked:
                 was_caps_locked = False
-                keyboard.lock_caps()
+                await keyboard.lock_caps()
 
     keyboard.before_resolved = before_resolved
     keyboard.on_layer_changed = on_layer_changed

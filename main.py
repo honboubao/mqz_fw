@@ -68,6 +68,8 @@ try:
 
                 deinit()
                 del keyboard
+                del status_led
+                del matrix
                 del deinit
                 gc.collect()
             finally:

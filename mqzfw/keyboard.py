@@ -28,14 +28,9 @@ class Keyboard:
     _hid_host_report_mods = 0x00
 
     async def run(self):
-        self._init()
         while True:
             await self._main_loop()
             await sleep(0)
-
-    def _init(self):
-        if self.hid is None:
-            self.hid = USBHID()
 
     # prev_hid_string = ''
 
@@ -55,9 +50,9 @@ class Keyboard:
         if self.unresolved_key_events:
             e = self.unresolved_key_events[0]
             e.prepare(self)
-            if e.resolve():
+            if await e.resolve():
                 if self.before_resolved:
-                    self.before_resolved(e)
+                    await self.before_resolved(e)
                 self.resolved_key_events.append(e)
                 self.unresolved_key_events.remove(e)
                 debug('ResolvedKeyEvents({})', self.resolved_key_events)
@@ -83,26 +78,26 @@ class Keyboard:
 
         return layer_key
 
-    def _check_layer_changed(self, prev_layer):
+    async def _check_layer_changed(self, prev_layer):
         if self.on_layer_changed and self._active_layers[0] != prev_layer:
-            self.on_layer_changed(self._active_layers[0], prev_layer)
+            await self.on_layer_changed(self._active_layers[0], prev_layer)
 
-    def set_layer(self, layer):
+    async def set_layer(self, layer):
         prev_layer = self._active_layers[0]
         self._active_layers.clear()
         self._active_layers.append(layer)
-        self._check_layer_changed(prev_layer)
+        await self._check_layer_changed(prev_layer)
 
-    def activate_layer(self, layer):
+    async def activate_layer(self, layer):
         prev_layer = self._active_layers[0]
         self._active_layers.insert(0, layer)
-        self._check_layer_changed(prev_layer)
+        await self._check_layer_changed(prev_layer)
 
-    def deactivate_layer(self, layer):
+    async def deactivate_layer(self, layer):
         prev_layer = self._active_layers[0]
         if layer in self._active_layers:
             self._active_layers.remove(layer)
-        self._check_layer_changed(prev_layer)
+        await self._check_layer_changed(prev_layer)
 
     def is_mod_pressed(self, mods):
         return bool(find(self.resolved_key_events, lambda e:
@@ -125,25 +120,27 @@ class Keyboard:
     def is_key_pressed(self, key):
         return bool(find(self.resolved_key_events, lambda i: i.key == key))
 
-    def press_key(self, key):
-        key_event = KeyEvent.virtual(self, key, True)
+    async def press_key(self, key):
+        key_event = await KeyEvent.virtual(self, key, True)
         self.resolved_key_events.append(key_event)
+        await self._send_hid()
 
-    def release_key(self, key):
-        key_event = KeyEvent.virtual(self, key, False)
+    async def release_key(self, key):
+        key_event = await KeyEvent.virtual(self, key, False)
         self.resolved_key_events.append(key_event)
+        await self._send_hid()
 
-    def tap_key(self, key):
-        self.press_key(key)
-        self.release_key(key)
+    async def tap_key(self, key):
+        await self.press_key(key)
+        await self.release_key(key)
 
-    def unlock_caps(self):
+    async def unlock_caps(self):
         if self.is_caps_locked():
-            self.tap_key(KC.CAPS)
+            await self.tap_key(KC.CAPS)
 
-    def lock_caps(self):
+    async def lock_caps(self):
         if not self.is_caps_locked():
-            self.tap_key(KC.CAPS)
+            await self.tap_key(KC.CAPS)
 
     def set_lock(self, locked):
         self.hid.locked = locked

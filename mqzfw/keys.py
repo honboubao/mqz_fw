@@ -43,13 +43,13 @@ class KeyEvent:
         self.key = None
 
     @classmethod
-    def virtual(cls, keyboard, key, pressed):
+    async def virtual(cls, keyboard, key, pressed):
         key_event = cls(None, pressed)
         key_event.keyboard = keyboard
         key_event.key = key
         if not pressed:
             key_event.parent = find(reversed(keyboard.resolved_key_events), lambda i: i.int_coord is None and i.key == key)
-        if not key_event.resolve():
+        if not await key_event.resolve():
             raise Exception("Can't create virtual key event from key that doesn't resolve immediately")
         return key_event
 
@@ -64,8 +64,8 @@ class KeyEvent:
         self.parent = find(reversed(keyboard.resolved_key_events), lambda i: i.int_coord == self.int_coord)
         self.key = self.parent.key if self.parent else keyboard.get_keymap_key(self.int_coord)
 
-    def resolve(self):
-        result = self.key.resolve(self, self.keyboard)
+    async def resolve(self):
+        result = await self.key.resolve(self, self.keyboard)
         if isinstance(result, HIDResults):
             self.hid_results = result
             return True
@@ -93,7 +93,7 @@ class Key:
         return '<{}: keycode={}, mods={:08b}, disable_mods={:08b}>'.format(
             self.__class__.__name__, self.keycode, self.mods, self.disable_mods)
 
-    def resolve(self, key_event, keyboard):
+    async def resolve(self, key_event, keyboard):
         if key_event.pressed:
             if self.hid_type and (self.keycode or self.mods > 0 or self.disable_mods > 0):
                 return HIDResults(self.hid_type, self.keycode, self.mods, self.disable_mods)
@@ -130,7 +130,7 @@ class HoldTapKey(Key):
         self.tapping_term = tapping_term
         self.previous_tap_time = None
 
-    def resolve(self, key_event, keyboard):
+    async def resolve(self, key_event, keyboard):
         # key is resolved if
         #   1) balanced flavor only:
         #      another key is pressed and released within tapping
@@ -143,24 +143,24 @@ class HoldTapKey(Key):
             # 1)
             if self.flavor == HoldTapFlavor.BALANCED and self._is_other_key_tapped_within_tapping_term(key_event, keyboard):
                 self.previous_tap_time = None
-                return self._resolve_hold(key_event, keyboard)
+                return await self._resolve_hold(key_event, keyboard)
             # 2)
             elif self._is_key_released_within_tapping_term(key_event, keyboard):
                 self.previous_tap_time = key_event.time
-                return self._resolve_tap(key_event, keyboard)
+                return await self._resolve_tap(key_event, keyboard)
             # 3)
             elif not self._is_within_tapping_term(now(), key_event, keyboard):
                 # 3a)
                 if self._is_double_tap(key_event, keyboard):
                     self.previous_tap_time = key_event.time
-                    return self._resolve_tap(key_event, keyboard)
+                    return await self._resolve_tap(key_event, keyboard)
                 # 3b)
                 else:
                     self.previous_tap_time = None
-                    return self._resolve_hold(key_event, keyboard)
+                    return await self._resolve_hold(key_event, keyboard)
             return False
         else:
-            return self._resolve_release(key_event, keyboard)
+            return await self._resolve_release(key_event, keyboard)
 
     def get_tapping_term(self, keyboard):
         if self.tapping_term is not None:
@@ -188,13 +188,13 @@ class HoldTapKey(Key):
                 return True
         return False
 
-    def _resolve_hold(self, key_event, keyboard):
+    async def _resolve_hold(self, key_event, keyboard):
         return True
 
-    def _resolve_tap(self, key_event, keyboard):
+    async def _resolve_tap(self, key_event, keyboard):
         return True
 
-    def _resolve_release(self, key_event, keyboard):
+    async def _resolve_release(self, key_event, keyboard):
         key_event.remove_all()
         return True
 
@@ -210,17 +210,17 @@ class ModTapKey(HoldTapKey):
         return '<{}: mod_key={}, tap_key={}, resolved_key={}>'.format(
             self.__class__.__name__, self.mod_key, self.tap_key, self.resolved_key)
 
-    def _resolve_hold(self, key_event, keyboard):
+    async def _resolve_hold(self, key_event, keyboard):
         self.resolved_key = self.mod_key
-        return self.resolved_key.resolve(key_event, keyboard)
+        return await self.resolved_key.resolve(key_event, keyboard)
 
-    def _resolve_tap(self, key_event, keyboard):
+    async def _resolve_tap(self, key_event, keyboard):
         self.resolved_key = self.tap_key
-        return self.resolved_key.resolve(key_event, keyboard)
+        return await self.resolved_key.resolve(key_event, keyboard)
 
-    def _resolve_release(self, key_event, keyboard):
+    async def _resolve_release(self, key_event, keyboard):
         if self.resolved_key:
-            result = self.resolved_key.resolve(key_event, keyboard)
+            result = await self.resolved_key.resolve(key_event, keyboard)
             if result:
                 self.resolved_key = None
             return result
@@ -243,23 +243,23 @@ class LayerTapKey(HoldTapKey):
         return '<{}: layer={}, tap_key={}, resolved_to={}>'.format(
             self.__class__.__name__, self.layer, self.tap_key, self.resolved_to)
 
-    def _resolve_hold(self, key_event, keyboard):
+    async def _resolve_hold(self, key_event, keyboard):
         self.resolved_to = self.layer
-        keyboard.activate_layer(self.layer)
+        await keyboard.activate_layer(self.layer)
         return True
 
-    def _resolve_tap(self, key_event, keyboard):
+    async def _resolve_tap(self, key_event, keyboard):
         self.resolved_to = self.tap_key
-        return self.tap_key.resolve(key_event, keyboard)
+        return await self.tap_key.resolve(key_event, keyboard)
 
-    def _resolve_release(self, key_event, keyboard):
+    async def _resolve_release(self, key_event, keyboard):
         if isinstance(self.resolved_to, Key):
-            result = self.resolved_to.resolve(key_event, keyboard)
+            result = await self.resolved_to.resolve(key_event, keyboard)
             if result:
                 self.resolved_to = None
             return result
         elif isinstance(self.resolved_to, int):
-            keyboard.deactivate_layer(self.resolved_to)
+            await keyboard.deactivate_layer(self.resolved_to)
             self.resolved_to = None
             key_event.remove_all()
             return True
@@ -277,11 +277,11 @@ class MomentaryLayerKey(Key):
     def __repr__(self):
         return '<{}: layer={}>'.format(self.__class__.__name__, self.layer)
 
-    def resolve(self, key_event, keyboard):
+    async def resolve(self, key_event, keyboard):
         if key_event.pressed:
-            keyboard.activate_layer(self.layer)
+            await keyboard.activate_layer(self.layer)
         else:
-            keyboard.deactivate_layer(self.layer)
+            await keyboard.deactivate_layer(self.layer)
             key_event.remove_all()
         return True
 
@@ -294,9 +294,9 @@ class SetLayerKey(Key):
     def __repr__(self):
         return '<{}: layer={}>'.format(self.__class__.__name__, self.layer)
 
-    def resolve(self, key_event, keyboard):
+    async def resolve(self, key_event, keyboard):
         if key_event.pressed:
-            keyboard.activate_layer(self.layer)
+            await keyboard.activate_layer(self.layer)
         else:
             key_event.remove_all()
         return True
@@ -309,10 +309,10 @@ class ClearLockKey(Key):
     def __repr__(self):
         return '<{}>'.format(self.__class__.__name__)
 
-    def resolve(self, key_event, keyboard):
+    async def resolve(self, key_event, keyboard):
         if key_event.pressed:
-            keyboard.set_layer(0)
-            keyboard.unlock_caps()
+            await keyboard.set_layer(0)
+            await keyboard.unlock_caps()
         else:
             key_event.remove_all()
         return True
@@ -330,7 +330,7 @@ class ShiftOverrideKey(Key):
         return '<{}: base_key={}, shifted_key={}, ignore_caps={}, resolved_key={}>'.format(
             self.__class__.__name__, self.base_key, self.shifted_key, self.ignore_caps, self.resolved_key)
 
-    def resolve(self, key_event, keyboard):
+    async def resolve(self, key_event, keyboard):
         if self.ignore_caps:
             is_shifted = keyboard.is_shift_pressed()
         else:
@@ -338,21 +338,21 @@ class ShiftOverrideKey(Key):
 
         if key_event.pressed:
             if is_shifted:
-                return self._resolve_shifted(key_event, keyboard)
+                return await self._resolve_shifted(key_event, keyboard)
             else:
-                return self._resolve_base(key_event, keyboard)
+                return await self._resolve_base(key_event, keyboard)
         else:
-            return self._resolve_release(key_event, keyboard)
+            return await self._resolve_release(key_event, keyboard)
 
-    def _resolve_base(self, key_event, keyboard):
+    async def _resolve_base(self, key_event, keyboard):
         self.resolved_key = self.base_key
-        result = self.resolved_key.resolve(key_event, keyboard)
+        result = await self.resolved_key.resolve(key_event, keyboard)
         self._handle_caps(result, keyboard)
         return result
 
-    def _resolve_shifted(self, key_event, keyboard):
+    async def _resolve_shifted(self, key_event, keyboard):
         self.resolved_key = self.shifted_key
-        result = self.resolved_key.resolve(key_event, keyboard)
+        result = await self.resolved_key.resolve(key_event, keyboard)
         self._handle_caps(result, keyboard)
         return result
 
@@ -365,9 +365,9 @@ class ShiftOverrideKey(Key):
             elif not is_shifted_key and is_caps_locked:
                 resolve_result.mods |= KC_LSFT
 
-    def _resolve_release(self, key_event, keyboard):
+    async def _resolve_release(self, key_event, keyboard):
         if self.resolved_key:
-            return self.resolved_key.resolve(key_event, keyboard)
+            return await self.resolved_key.resolve(key_event, keyboard)
         else:
             key_event.remove_all()
             return True
