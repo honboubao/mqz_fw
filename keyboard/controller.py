@@ -6,6 +6,7 @@ from mqzfw.matrix import DiodeOrientation
 from mqzfw.nrf_power import deep_sleep, get_battery_percentage
 
 from mqzfw.hid import BLEHID, USBHID
+from mqzfw.ble import BLEServices
 from mqzfw.keyboard import Keyboard
 from mqzfw.matrix import MatrixScanner
 
@@ -99,7 +100,8 @@ def setup_keyboard(ble_mode, ble_name):
 
     keyboard = Keyboard()
 
-    keyboard.hid = BLEHID(ble_name=ble_name) if ble_mode else USBHID()
+    ble = BLEServices(ble_name) if ble_mode else None
+    keyboard.hid = BLEHID(ble) if ble_mode else USBHID()
     keyboard.debug_enabled = False
 
     matrix = MatrixScanner(
@@ -108,19 +110,7 @@ def setup_keyboard(ble_mode, ble_name):
         diode_orientation=diode_orientation
     )
 
-    was_connected = keyboard.hid.is_connected()
-
     def on_tick():
-        battery_level = get_battery_percentage()
-        if ble_mode:
-            keyboard.hid.send_battery_level(battery_level)
-
-        nonlocal was_connected
-        is_connected = keyboard.hid.is_connected()
-        if ble_mode and not is_connected and was_connected:
-            keyboard.hid.start_advertising()
-        was_connected = is_connected
-
         if lock_switch is not None:
             # switch position unlock (pin disconnected from ground) -> lock_switch.value = True
             # switch position lock (pin connected to ground) -> lock_switch.value = False
@@ -144,4 +134,4 @@ def setup_keyboard(ble_mode, ble_name):
         if power_switch is not None:
             power_switch.deinit()
 
-    return keyboard, status_led, matrix, deinit
+    return keyboard, status_led, matrix, ble, deinit

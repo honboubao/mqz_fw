@@ -22,6 +22,13 @@ def write_log(lines):
 try:
     write_log(['Booting up firmware.'])
 
+    try:
+        import _bleio
+        _bleio.adapter.stop_advertising()
+    except ImportError:
+        # BLE not supported on this platform
+        pass
+
     import asyncio
     import gc
     import traceback
@@ -32,6 +39,7 @@ try:
 
     from keyboard.controller import setup_keyboard
     from keyboard.layout import setup_layout
+    from mqzfw.nrf_power import monitor_battery
 
     # TODO use nrf EVENTS_USBDETECTED register?
     ble_mode = True #not supervisor.runtime.usb_connected
@@ -49,7 +57,7 @@ try:
 
         while True:
             write_log(['Setting up keyboard'])
-            keyboard, status_led, matrix, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
+            keyboard, status_led, matrix, ble, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
             setup_layout(keyboard)
 
             if not running_on_board:
@@ -58,18 +66,27 @@ try:
             write_log(['Started'])
 
             try:
-                keyboard_task = asyncio.create_task(keyboard.run())
-                matrix_task = asyncio.create_task(matrix.run(keyboard))
-                status_led_task = asyncio.create_task(status_led.run(keyboard.hid, ble_mode))
-                await asyncio.gather(keyboard_task, matrix_task, status_led_task)
+                tasks = [
+                    asyncio.create_task(keyboard.run()),
+                    asyncio.create_task(matrix.run(keyboard)),
+                    asyncio.create_task(status_led.run(keyboard.hid, ble_mode)),
+                    asyncio.create_task(monitor_battery(status_led, ble)),
+                ]
+                if ble is not None:
+                    tasks.append(asyncio.create_task(ble.monitor_connection()))
+
+                await asyncio.gather(*tasks)
             except Exception as main_loop_exception:
                 write_log(['Error in main loop.'])
                 write_log(traceback.format_exception(main_loop_exception))
+
+                # TODO cancel other tasks if one task fails
 
                 deinit()
                 del keyboard
                 del status_led
                 del matrix
+                del ble
                 del deinit
                 gc.collect()
             finally:

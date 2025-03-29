@@ -1,6 +1,5 @@
 from asyncio import sleep
 from misc.time import now, time_diff, time_add
-from mqzfw.nrf_power import get_battery_percentage
 
 class LED_STATUS:
     STARTUP = 0
@@ -17,6 +16,7 @@ class StatusLed:
         self.status = None
         self.color = None
         self.keyframes = None
+        self.battery_level = None
 
     def deinit(self):
         pass
@@ -56,7 +56,7 @@ class StatusLed:
         while True:
             if not hid.is_connected():
                 self.set_status(connecting_led_status)
-            elif get_battery_percentage() < 10:
+            elif self.battery_level is not None and self.battery_level < 10:
                 self.set_status(LED_STATUS.LOW_BATTERY)
             else:
                 self.set_status(connected_led_status)

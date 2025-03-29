@@ -1,33 +1,8 @@
 from asyncio import sleep
 import traceback
-import time
 import usb_hid
-from micropython import const
 
-from storage import getmount
 from misc.time import now, time_diff
-
-try:
-    from adafruit_ble import BLERadio
-    from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
-    from adafruit_ble.services.standard.hid import HIDService
-    from adafruit_ble.services.standard import BatteryService
-
-    ble = BLERadio()
-    ble.stop_advertising()
-
-    BLE_APPEARANCE_HID_KEYBOARD = const(961)
-
-    ble_hid = HIDService()
-    ble_hid.protocol_mode = 0  # Boot protocol
-    ble_battery = BatteryService()
-    ble_advertisement = ProvideServicesAdvertisement(ble_hid)
-    ble_advertisement.appearance = BLE_APPEARANCE_HID_KEYBOARD
-    ble_advertisement.services.append(ble_battery)
-except ImportError:
-    # BLE not supported on this platform
-    pass
-
 
 class HIDReportTypes:
     KEYBOARD = 1
@@ -258,21 +233,15 @@ class USBHID(AbstractHID):
         return self.ready
 
 class BLEHID(AbstractHID):
-    def __init__(self, ble_name=str(getmount('/').label), **kwargs):
+    def __init__(self, ble, **kwargs):
         self.ble = ble
-        ble.name = ble_name
         super().__init__()
 
-    def __repr__(self):
-        return '<{}: connected={}, advertising={}, connections={}, paired={}>'.format(
-            self.__class__.__name__, ble.connected, ble.advertising, ble.connections, [c.paired for c in ble.connections])
-
     def post_init(self):
-
         self.devices = {}
         self.host_report_device = None
 
-        for device in ble_hid.devices:
+        for device in self.ble.hid.devices:
             us = device.usage
             up = device.usage_page
 
@@ -287,21 +256,11 @@ class BLEHID(AbstractHID):
                 elif up == HIDUsagePage.MOUSE and us == HIDUsage.MOUSE:
                     self.devices[HIDReportTypes.MOUSE] = device
 
-        self.start_advertising()
-
     async def hid_send(self, hid_report_type, evt):
-        if not ble.connected:
+        if not self.is_connected:
             return
 
-        # the hid report would be sent to every connected host,
-        # so make sure there's only one host connected
-        if len(ble.connections) > 1:
-            for c in ble.connections[1:]:
-                c.disconnect()
-
-        # make sure we are talking over a secured channel to the host
-        if not ble.connections[0].paired:
-            ble.connections[0].pair()
+        await self.ble.ensure_single_host_paired()
 
         if hid_report_type in self.devices:
             await self.hid_send_delay(hid_report_type)
@@ -315,29 +274,5 @@ class BLEHID(AbstractHID):
            return self.host_report_device.report
         return None
 
-    def clear_bonds(self):
-        import _bleio
-
-        _bleio.adapter.erase_bonding()
-
-    def start_advertising(self):
-        self.stop_advertising()
-
-        # disconnect all hosts so the host connecting to this
-        # advertisement will be the only one
-        if ble.connected:
-            for c in ble.connections:
-                c.disconnect()
-
-        ble.start_advertising(ble_advertisement)
-
-    def stop_advertising(self):
-        ble.stop_advertising()
-
     def is_connected(self):
-        return ble.connected
-
-    def send_battery_level(self, battery_level):
-        if not ble.connected:
-            return
-        ble_battery.level = battery_level
+        return self.ble.radio.connected

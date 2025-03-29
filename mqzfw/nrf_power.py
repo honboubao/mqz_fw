@@ -1,12 +1,22 @@
 import sys
 import memorymap
 import re
+from asyncio import sleep
 from collections import namedtuple
 from array import array
 
+async def monitor_battery(status_led, ble):
+    while True:
+        battery_level = get_battery_percentage()
+        status_led.battery_level = battery_level
+        if ble is not None:
+            ble.send_battery_level(battery_level)
+        await sleep(1)
+
+
 battery_percentage = None
 battery_voltage = None
-smoothing_factor = 0.01
+smoothing_factor = 0.1
 
 def get_battery_percentage():
     global battery_percentage
