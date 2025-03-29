@@ -70,7 +70,7 @@ class KeyEvent:
             self.hid_results = result
             return True
         return result
-    
+
     def remove(self):
         self.to_be_removed = True
 

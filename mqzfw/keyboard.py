@@ -1,8 +1,8 @@
 from asyncio import sleep
 from mqzfw.hid import USBHID
 from mqzfw.keys import KC_CAPSLOCK, KC_LCTL, KC_LSFT, KC_RCTL, KC_RSFT, KeyEvent
-from mqzfw.matrix import MatrixScanner
 from misc.utils import find
+from misc.logging import debug
 import mqzfw.keycodes as KC
 
 class Keyboard:
@@ -11,9 +11,6 @@ class Keyboard:
     # config
     keymap = []
     holdtaps = []
-    row_pins = None
-    col_pins = None
-    diode_orientation = None
     hid = None
     tapping_term = 300
 
@@ -25,7 +22,6 @@ class Keyboard:
     unresolved_key_events = []
     resolved_key_events = []
 
-    _matrix = None
     _mods_active = set()
     _active_layers = [0]
 
@@ -37,23 +33,9 @@ class Keyboard:
             await self._main_loop()
             await sleep(0)
 
-    def _log(self, message, *args):
-        if self.debug_enabled:
-            print(message.format(*args))
-
     def _init(self):
         if self.hid is None:
             self.hid = USBHID()
-
-        self._matrix = MatrixScanner(
-            cols=self.col_pins,
-            rows=self.row_pins,
-            diode_orientation=self.diode_orientation
-        )
-
-    def deinit(self):
-        if self._matrix is not None:
-            self._matrix.deinit()
 
     # prev_hid_string = ''
 
@@ -70,12 +52,6 @@ class Keyboard:
         if hid_host_report and hid_host_report[0] != self._hid_host_report_mods:
             self._hid_host_report_mods = hid_host_report[0]
 
-        matrix_update = self._matrix.scan_for_changes()
-        if matrix_update:
-            self._log('\n################################################')
-            self._log('MatrixChange(ic={} pressed={})', matrix_update.int_coord, matrix_update.pressed)
-            self.unresolved_key_events.append(matrix_update)
-
         if self.unresolved_key_events:
             e = self.unresolved_key_events[0]
             e.prepare(self)
@@ -84,15 +60,17 @@ class Keyboard:
                     self.before_resolved(e)
                 self.resolved_key_events.append(e)
                 self.unresolved_key_events.remove(e)
-                self._log('ResolvedKeyEvents({})', self.resolved_key_events)
+                debug('ResolvedKeyEvents({})', self.resolved_key_events)
             self.resolved_key_events = [e for e in self.resolved_key_events if not e.to_be_removed]
 
-        await self._send_hid()
+            await self._send_hid()
 
     async def _send_hid(self):
         self.hid.create_report(self.resolved_key_events)
         await self.hid.send()
 
+    def add_matrix_key_event(self, matrix_key_event):
+        self.unresolved_key_events.append(matrix_key_event)
 
     def get_keymap_key(self, int_coord):
         layer = self._active_layers[0]
@@ -100,8 +78,8 @@ class Keyboard:
             layer_key = self.keymap[layer][int_coord]
         except IndexError:
             layer_key = None
-            self._log(f'KeymapIndexError(int_coord={int_coord}, layer={layer})')
-        self._log('KeyResolution(key={}, layer={})', layer_key, layer)
+            debug('KeymapIndexError(int_coord={}, layer={layer})', int_coord, layer)
+        debug('KeyResolution(key={}, int_coord={}, layer={})', layer_key, int_coord, layer)
 
         return layer_key
 
@@ -147,19 +125,17 @@ class Keyboard:
     def is_key_pressed(self, key):
         return bool(find(self.resolved_key_events, lambda i: i.key == key))
 
-    async def press_key(self, key):
+    def press_key(self, key):
         key_event = KeyEvent.virtual(self, key, True)
         self.resolved_key_events.append(key_event)
-        await self._send_hid()
 
-    async def release_key(self, key):
+    def release_key(self, key):
         key_event = KeyEvent.virtual(self, key, False)
         self.resolved_key_events.append(key_event)
-        await self._send_hid()
 
-    async def tap_key(self, key):
-        await self.press_key(key)
-        await self.release_key(key)
+    def tap_key(self, key):
+        self.press_key(key)
+        self.release_key(key)
 
     def unlock_caps(self):
         if self.is_caps_locked():

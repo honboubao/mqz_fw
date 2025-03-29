@@ -1,5 +1,7 @@
+from asyncio import sleep
 import digitalio
 from mqzfw.keys import KeyEvent
+from misc.logging import debug
 
 
 def intify_coordinate(row, col, len_cols):
@@ -82,6 +84,15 @@ class MatrixScanner:
     def deinit(self):
         for pin in self.inputs + self.outputs:
             pin.deinit()
+
+    async def run(self, keyboard):
+        while True:
+            matrix_update = self.scan_for_changes()
+            if matrix_update:
+                debug('\n################################################')
+                debug('MatrixChange(ic={} pressed={})', matrix_update.int_coord, matrix_update.pressed)
+                keyboard.add_matrix_key_event(matrix_update)
+            await sleep(0)
 
     def scan_for_changes(self):
         '''

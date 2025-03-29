@@ -26,6 +26,7 @@ try:
     import gc
     import traceback
     import board
+    from misc.logging import set_debug_log_enabled
     from misc.time import now, time_diff
     from misc.switch import switch_pressed
 
@@ -41,13 +42,14 @@ try:
     elif board.board_id == 'nice_nano' or board.board_id == 'supermini_nrf52840':
         ble_mode = not switch_pressed(board.P0_09, board.P1_06)
 
+    set_debug_log_enabled(True)
 
     async def main():
         last_exception = now()
 
         while True:
             write_log(['Setting up keyboard'])
-            keyboard, status_led, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
+            keyboard, status_led, matrix, deinit = setup_keyboard(ble_mode, 'Micro Qwertz BLE')
             setup_layout(keyboard)
 
             if not running_on_board:
@@ -57,8 +59,9 @@ try:
 
             try:
                 keyboard_task = asyncio.create_task(keyboard.run())
+                matrix_task = asyncio.create_task(matrix.run(keyboard))
                 status_led_task = asyncio.create_task(status_led.run())
-                await asyncio.gather(keyboard_task, status_led_task)
+                await asyncio.gather(keyboard_task, matrix_task, status_led_task)
             except Exception as main_loop_exception:
                 write_log(['Error in main loop.'])
                 write_log(traceback.format_exception(main_loop_exception))

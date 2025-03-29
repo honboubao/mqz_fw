@@ -7,6 +7,7 @@ from mqzfw.nrf_power import deep_sleep, get_battery_percentage
 
 from mqzfw.hid import BLEHID, USBHID
 from mqzfw.keyboard import Keyboard
+from mqzfw.matrix import MatrixScanner
 
 print('board_id: ' + board.board_id)
 
@@ -101,9 +102,11 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard.hid = BLEHID(ble_name=ble_name) if ble_mode else USBHID()
     keyboard.debug_enabled = False
 
-    keyboard.col_pins = col_pins
-    keyboard.row_pins = row_pins
-    keyboard.diode_orientation = diode_orientation
+    matrix = MatrixScanner(
+        cols=col_pins,
+        rows=row_pins,
+        diode_orientation=diode_orientation
+    )
 
     connected_led_status = LED_STATUS.BLE_CONNECTED if ble_mode else LED_STATUS.USB_CONNECTED
     connecting_led_status = LED_STATUS.BLE_CONNECTING if ble_mode else LED_STATUS.USB_CONNECTING
@@ -141,7 +144,7 @@ def setup_keyboard(ble_mode, ble_name):
     keyboard.on_tick = on_tick
 
     def deinit():
-        keyboard.deinit()
+        matrix.deinit()
         status_led.deinit()
 
         if lock_switch is not None:
@@ -150,4 +153,4 @@ def setup_keyboard(ble_mode, ble_name):
         if power_switch is not None:
             power_switch.deinit()
 
-    return keyboard, status_led, deinit
+    return keyboard, status_led, matrix, deinit
